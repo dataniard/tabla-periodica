@@ -52,6 +52,13 @@
       <div class="fila-f"><span class="etiqueta-f">57–71</span><div id="lantanidos" class="fila-elementos"></div></div>
       <div class="fila-f"><span class="etiqueta-f">89–103</span><div id="actinidos" class="fila-elementos"></div></div>
     </div>
+    <div class="theme-row">
+      <label class="switch">
+        <input type="checkbox" id="temaClaro" aria-label="Tema claro / Light theme" />
+        <span class="slider" aria-hidden="true"></span>
+        <span class="switch-label" data-i18n="theme">☀️ Claro</span>
+      </label>
+    </div>
   </main>
 
   <div id="modal" class="modal oculto" role="dialog" aria-modal="true">
@@ -78,6 +85,9 @@
           <button id="comprobar" data-i18n="check">Comprobar</button>
         </div>
         <p id="mensajeJuego" class="juego-mensaje" aria-live="polite"></p>
+      </div>
+      <div id="grupoZona" class="grupo-zona oculto">
+        <button id="verElementos" data-i18n="verElementos">Ver elementos ↓</button>
       </div>
     </div>
   </div>

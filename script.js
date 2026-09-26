@@ -14,6 +14,7 @@ const TEXTOS = {
     familias: {"no-metal":"No metal","gas-noble":"Gas noble","metal-alcalino":"Metal alcalino","alcalinoterreo":"Alcalinotérreo","metaloide":"Metaloide","halogeno":"Halógeno","metal-transicion":"Metal de transición","metal-postransicion":"Metal postransición","lantanido":"Lantánido","actinido":"Actínido"},
     estados: {solido:"Sólido",liquido:"Líquido",gas:"Gas",desconocido:"Desconocido"},
     game: "🎮 Juego",
+    theme: "☀️ Claro",
     restart: "Reiniciar juego",
     giveUp: "Rendirse",
     check: "Comprobar",
@@ -26,7 +27,18 @@ const TEXTOS = {
     wrong: "Fallaste, inténtalo de nuevo ❌",
     win: "¡Completado! 🎉 ¡Enhorabuena!",
     revealed: "Tablero revelado",
-    pista: e => `#${e.numero} · ${TEXTOS.es.familias[e.familia]} · Grupo ${e.grupo}, Periodo ${e.periodo} · ${e.masa} u`
+    pista: e => `#${e.numero} · ${TEXTOS.es.familias[e.familia]} · Grupo ${e.grupo}, Periodo ${e.periodo} · ${e.masa} u`,
+    lanTitulo: "Lantánidos (57–71)",
+    lanRango: "15 elementos · Del lantano (57) al lutecio (71)",
+    lanUso: "Imanes potentes, pantallas, baterías híbridas y lentes: son las famosas tierras raras",
+    lanCur: "A pesar del nombre, algunos son más abundantes que el plomo en la corteza terrestre",
+    lanWiki: "Lantánidos",
+    actTitulo: "Actínidos (89–103)",
+    actRango: "15 elementos · Del actinio (89) al laurencio (103)",
+    actUso: "Energía nuclear, medicina contra el cáncer y sondas espaciales",
+    actCur: "Todos son radiactivos; el uranio y el plutonio son los más conocidos",
+    actWiki: "Actínidos",
+    verElementos: "Ver elementos ↓"
   },
   en: {
     title: "Interactive Periodic Table",
@@ -43,6 +55,7 @@ const TEXTOS = {
     familias: {"no-metal":"Nonmetal","gas-noble":"Noble gas","metal-alcalino":"Alkali metal","alcalinoterreo":"Alkaline earth","metaloide":"Metalloid","halogeno":"Halogen","metal-transicion":"Transition metal","metal-postransicion":"Post-transition metal","lantanido":"Lanthanide","actinido":"Actinide"},
     estados: {solido:"Solid",liquido:"Liquid",gas:"Gas",desconocido:"Unknown"},
     game: "🎮 Game",
+    theme: "☀️ Light",
     restart: "Restart game",
     giveUp: "Give up",
     check: "Check",
@@ -55,12 +68,24 @@ const TEXTOS = {
     wrong: "Wrong, try again ❌",
     win: "Completed! 🎉 Well done!",
     revealed: "Board revealed",
-    pista: e => `#${e.numero} · ${TEXTOS.en.familias[e.familia]} · Group ${e.grupo}, Period ${e.periodo} · ${e.masa} u`
+    pista: e => `#${e.numero} · ${TEXTOS.en.familias[e.familia]} · Group ${e.grupo}, Period ${e.periodo} · ${e.masa} u`,
+    lanTitulo: "Lanthanides (57–71)",
+    lanRango: "15 elements · From lanthanum (57) to lutetium (71)",
+    lanUso: "Strong magnets, screens, hybrid batteries and lenses: the famous rare earths",
+    lanCur: "Despite the name, some are more abundant than lead in Earth's crust",
+    lanWiki: "Lanthanide",
+    actTitulo: "Actinides (89–103)",
+    actRango: "15 elements · From actinium (89) to lawrencium (103)",
+    actUso: "Nuclear energy, cancer medicine and space probes",
+    actCur: "All are radioactive; uranium and plutonium are the best known",
+    actWiki: "Actinide",
+    verElementos: "See elements ↓"
   }
 };
 
 let datos = [];
 let lang = localStorage.getItem("tp-lang") || "es";
+let theme = localStorage.getItem("tp-theme") || "dark";
 let gameMode = false;
 let acertados = new Set();
 let intentosJuego = 0;
@@ -68,6 +93,12 @@ let elementoActual = null;
 const $ = id => document.getElementById(id);
 const T = () => TEXTOS[lang];
 const nombre = e => lang === "es" ? e.nombre_es : e.nombre_en;
+
+function aplicarTema() {
+  document.body.classList.toggle("light", theme === "light");
+  const sw = $("temaClaro");
+  if (sw) sw.checked = theme === "light";
+}
 
 function aplicarTextos() {
   document.documentElement.lang = lang;
@@ -140,15 +171,23 @@ function render() {
   });
   // Marcadores de hueco La-Lu y Ac-Lr en la tabla principal
   const hueco1 = document.createElement("div");
-  hueco1.className = "elemento fam-lantanido";
+  hueco1.className = "elemento fam-lantanido" + (gameMode ? " juego-oculto" : "");
   hueco1.style.gridColumn = 3; hueco1.style.gridRow = 6;
-  hueco1.innerHTML = `<span class="sim">57–71</span><span class="nom">La–Lu</span>`;
-  hueco1.onclick = () => document.querySelector(".bloque-f").scrollIntoView({behavior:"smooth"});
+  hueco1.innerHTML = gameMode
+    ? `<span class="num">57–71</span><span class="sim">?</span>`
+    : `<span class="sim">57–71</span><span class="nom">La–Lu</span>`;
+  hueco1.onclick = () => gameMode
+    ? document.querySelector(".bloque-f").scrollIntoView({behavior:"smooth"})
+    : mostrarGrupo("lan");
   const hueco2 = hueco1.cloneNode(true);
-  hueco2.className = "elemento fam-actinido";
+  hueco2.className = "elemento fam-actinido" + (gameMode ? " juego-oculto" : "");
   hueco2.style.gridRow = 7;
-  hueco2.innerHTML = `<span class="sim">89–103</span><span class="nom">Ac–Lr</span>`;
-  hueco2.onclick = hueco1.onclick;
+  hueco2.innerHTML = gameMode
+    ? `<span class="num">89–103</span><span class="sim">?</span>`
+    : `<span class="sim">89–103</span><span class="nom">Ac–Lr</span>`;
+  hueco2.onclick = () => gameMode
+    ? document.querySelector(".bloque-f").scrollIntoView({behavior:"smooth"})
+    : mostrarGrupo("act");
   tabla.appendChild(hueco1); tabla.appendChild(hueco2);
   filtrar();
 }
@@ -184,9 +223,11 @@ function mostrar(e) {
   if (gameMode && !acertados.has(e.numero)) { mostrarPregunta(e); return; }
   $("detalleLista").classList.remove("oculto");
   $("juegoZona").classList.add("oculto");  document.querySelectorAll(".elemento.seleccionado").forEach(x => x.classList.remove("seleccionado"));
+  $("grupoZona").classList.add("oculto");
   document.querySelector(`.elemento[data-numero="${e.numero}"]`)?.classList.add("seleccionado");
   $("dSimbolo").textContent = e.simbolo;
   $("dSimbolo").className = `d-simbolo fam-${e.familia}`;
+  $("dSimbolo").style.fontSize = "";
   $("dNumero").textContent = "#" + e.numero;
   $("dNombre").textContent = nombre(e);
   $("dFamilia").textContent = T().familias[e.familia];
@@ -202,6 +243,35 @@ function mostrar(e) {
     wiki.href = base + encodeURIComponent(wname);
     wiki.textContent = T().wiki + " ↗";
   }
+  $("modal").classList.remove("oculto");
+}
+
+function mostrarGrupo(cual) {
+  const lan = cual === "lan";
+  document.querySelectorAll(".elemento.seleccionado").forEach(x => x.classList.remove("seleccionado"));
+  $("detalleLista").classList.remove("oculto");
+  $("juegoZona").classList.add("oculto");
+  $("dSimbolo").textContent = lan ? "57–71" : "89–103";
+  $("dSimbolo").className = lan ? "d-simbolo fam-lantanido" : "d-simbolo fam-actinido";
+  $("dSimbolo").style.fontSize = "1.4rem";
+  $("dNumero").textContent = lan ? T().lanRango : T().actRango;
+  $("dNombre").textContent = lan ? T().lanTitulo : T().actTitulo;
+  $("dFamilia").textContent = lan ? T().familias["lantanido"] : T().familias["actinido"];
+  $("dMasa").textContent = "—";
+  $("dEstado").textContent = T().estados["solido"];
+  $("dGrupo").textContent = lang === "es"
+    ? (lan ? "Grupo 3, Periodo 6" : "Grupo 3, Periodo 7")
+    : (lan ? "Group 3, Period 6" : "Group 3, Period 7");
+  $("dUso").textContent = lan ? T().lanUso : T().actUso;
+  $("dCur").textContent = lan ? T().lanCur : T().actCur;
+  const wiki = $("dWiki");
+  if (wiki) {
+    const wname = lan ? T().lanWiki : T().actWiki;
+    const base = lang === "es" ? "https://es.wikipedia.org/wiki/" : "https://en.wikipedia.org/wiki/";
+    wiki.href = base + encodeURIComponent(wname);
+    wiki.textContent = T().wiki + " ↗";
+  }
+  $("grupoZona").classList.remove("oculto");
   $("modal").classList.remove("oculto");
 }
 
@@ -271,11 +341,13 @@ function mostrarPregunta(e) {
   document.querySelector(`.elemento[data-numero="${e.numero}"]`)?.classList.add("seleccionado");
   $("dSimbolo").textContent = "?";
   $("dSimbolo").className = "d-simbolo";
+  $("dSimbolo").style.fontSize = "";
   $("dNumero").textContent = "#" + e.numero;
   $("dNombre").textContent = T().guessTitle;
   $("dFamilia").textContent = "";
   $("detalleLista").classList.add("oculto");
   $("juegoZona").classList.remove("oculto");
+  $("grupoZona").classList.add("oculto");
   $("juegoPista").textContent = T().pista(e);
   $("adivinanza").value = "";
   const m = $("mensajeJuego");
@@ -324,14 +396,16 @@ function init() {
   $("modal").addEventListener("click", e => { if (e.target.id === "modal") { $("modal").classList.add("oculto"); elementoActual = null; } });
   document.addEventListener("keydown", e => { if (e.key === "Escape") { $("modal").classList.add("oculto"); elementoActual = null; } });
   $("modoJuego").onchange = e => { e.target.checked ? iniciarJuego() : salirJuego(); };
+  $("temaClaro").onchange = e => { theme = e.target.checked ? "light" : "dark"; localStorage.setItem("tp-theme", theme); aplicarTema(); };
   $("reiniciarJuego").onclick = reiniciarJuego;
   $("revelarTodo").onclick = revelarTodo;
   $("comprobar").onclick = comprobarIntento;
   $("adivinanza").addEventListener("keydown", e => { if (e.key === "Enter") comprobarIntento(); });
+  $("verElementos").onclick = () => { $("modal").classList.add("oculto"); document.querySelector(".bloque-f").scrollIntoView({behavior:"smooth"}); };
 
   fetch("data.json")
     .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-    .then(j => { datos = j; aplicarTextos(); render(); })
+    .then(j => { datos = j; aplicarTema(); aplicarTextos(); render(); })
     .catch(err => {
       $("tabla").innerHTML = `<p style="grid-column:1/-1">No se pudo cargar data.json (${err.message}). Abre con: <code>python3 -m http.server</code></p>`;
     });
