@@ -1,0 +1,2242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="title">Tabla Periódica Interactiva</title>
+  <style>
+:root {
+  --fondo: #0f172a;
+  --panel: #1e293b;
+  --texto: #e2e8f0;
+  --muted: #94a3b8;
+  --acento: #38bdf8;
+  --no-metal: #22c55e;
+  --gas-noble: #a78bfa;
+  --metal-alcalino: #ef4444;
+  --alcalinoterreo: #f97316;
+  --metaloide: #eab308;
+  --halogeno: #06b6d4;
+  --metal-transicion: #60a5fa;
+  --metal-postransicion: #94a3b8;
+  --lantanido: #f472b6;
+  --actinido: #fb7185;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: var(--fondo); color: var(--texto); min-height: 100vh;
+}
+.topbar {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 1rem; padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #0f172a, #1e3a5f);
+  border-bottom: 1px solid #334155; position: sticky; top: 0; z-index: 10;
+}
+.brand h1 { margin: 0; font-size: 1.5rem; }
+.subtitle { margin: 0.25rem 0 0; color: var(--muted); }
+.lang-wrap { display: flex; align-items: center; gap: 0.4rem; }
+.lang-wrap select, .controls select, .controls input, .controls button {
+  background: var(--panel); color: var(--texto);
+  border: 1px solid #475569; border-radius: 8px; padding: 0.5rem 0.7rem;
+}
+.controls { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 1rem 1.5rem; align-items: center; }
+.controls input { flex: 1; min-width: 200px; }
+.controls button { cursor: pointer; }
+.controls button:hover { border-color: var(--acento); }
+.contador { color: var(--muted); font-size: 0.9rem; }
+.leyenda { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0 1.5rem; }
+.chip {
+  font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 999px;
+  border: 1px solid #475569; cursor: pointer; background: var(--panel);
+}
+.chip.activo { outline: 2px solid var(--acento); }
+main { padding: 1rem 1.5rem 2rem; }
+.tabla {
+  display: grid; grid-template-columns: repeat(18, minmax(52px, 1fr));
+  gap: 5px; overflow-x: auto; padding-bottom: 0.5rem;
+}
+.elemento {
+  border-radius: 8px; padding: 6px 4px; text-align: center; cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.15); min-height: 66px;
+  display: flex; flex-direction: column; justify-content: center;
+  transition: transform 0.12s, box-shadow 0.12s; color: #0f172a; font-weight: 600;
+}
+.elemento:hover, .elemento:focus { transform: scale(1.08); box-shadow: 0 0 0 2px var(--acento); z-index: 2; }
+.elemento .num { font-size: 0.65rem; font-weight: 400; opacity: 0.8; }
+.elemento .sim { font-size: 1.05rem; font-weight: 800; }
+.elemento .nom { font-size: 0.6rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.elemento.seleccionado { outline: 3px solid #fff; }
+.elemento.atenuado { opacity: 0.15; filter: grayscale(1); pointer-events: none; }
+.fam-no-metal { background: var(--no-metal); }
+.fam-gas-noble { background: var(--gas-noble); }
+.fam-metal-alcalino { background: var(--metal-alcalino); color: #fff; }
+.fam-alcalinoterreo { background: var(--alcalinoterreo); }
+.fam-metaloide { background: var(--metaloide); }
+.fam-halogeno { background: var(--halogeno); }
+.fam-metal-transicion { background: var(--metal-transicion); }
+.fam-metal-postransicion { background: var(--metal-postransicion); }
+.fam-lantanido { background: var(--lantanido); }
+.fam-actinido { background: var(--actinido); color: #fff; }
+.bloque-f { margin-top: 1rem; display: grid; gap: 6px; }
+.fila-f { display: flex; gap: 8px; align-items: stretch; }
+.etiqueta-f { color: var(--muted); font-size: 0.75rem; width: 52px; display: flex; align-items: center; }
+.fila-elementos { display: grid; grid-template-columns: repeat(15, minmax(52px, 1fr)); gap: 5px; flex: 1; }
+.modal {
+  position: fixed; inset: 0; background: rgba(2,6,23,0.7);
+  display: flex; align-items: center; justify-content: center; padding: 1rem; z-index: 50;
+}
+.modal.oculto { display: none; }
+.tarjeta-detalle {
+  background: var(--panel); border: 1px solid #475569; border-radius: 16px;
+  max-width: 480px; width: 100%; padding: 1.5rem; position: relative;
+  animation: entrar 0.18s ease-out;
+}
+@keyframes entrar { from { transform: translateY(12px); opacity: 0; } }
+.cerrar {
+  position: absolute; top: 0.6rem; right: 0.6rem; background: transparent;
+  border: none; color: var(--texto); font-size: 1.1rem; cursor: pointer;
+}
+.detalle-head { display: flex; gap: 1rem; align-items: center; }
+.d-simbolo {
+  font-size: 2.5rem; font-weight: 900; width: 90px; height: 90px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 14px; background: var(--acento); color: #082f49;
+}
+.d-numero { color: var(--muted); }
+.detalle-head h2 { margin: 0; }
+.d-fam { margin: 0.2rem 0 0; color: var(--muted); font-size: 0.9rem; }
+.detalle-lista { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin: 1rem 0 0; }
+.detalle-lista > div { background: #0f172a; border-radius: 10px; padding: 0.6rem; }
+.detalle-lista .ancho { grid-column: 1 / -1; }
+.detalle-lista dt { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; }
+.detalle-lista dd { margin: 0.2rem 0 0; }
+footer { padding: 1rem 1.5rem 2rem; color: var(--muted); }
+@media (max-width: 900px) {
+  .tabla { grid-template-columns: repeat(18, 56px); }
+  .fila-elementos { grid-template-columns: repeat(15, 56px); overflow-x: auto; }
+  .detalle-lista { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1 data-i18n="title">Tabla Periódica Interactiva</h1>
+      <p class="subtitle" data-i18n="subtitle">Pulsa cualquier elemento para ver sus propiedades</p>
+    </div>
+    <div class="lang-wrap">
+      <label for="lang">🌐</label>
+      <select id="lang" aria-label="Idioma / Language">
+        <option value="es">Español</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+  </header>
+
+  <section class="controls">
+    <input id="buscador" type="search" data-i18n-ph="search" placeholder="Buscar por nombre, símbolo o número…" autocomplete="off" />
+    <select id="filtroFamilia" aria-label="Familia"></select>
+    <select id="filtroEstado" aria-label="Estado"></select>
+    <button id="limpiar" data-i18n="clear">Limpiar</button>
+    <span id="contador" class="contador"></span>
+  </section>
+
+  <section class="leyenda" id="leyenda"></section>
+
+  <main>
+    <div id="tabla" class="tabla" role="grid" aria-label="Tabla periódica"></div>
+    <div class="bloque-f">
+      <div class="fila-f"><span class="etiqueta-f">57–71</span><div id="lantanidos" class="fila-elementos"></div></div>
+      <div class="fila-f"><span class="etiqueta-f">89–103</span><div id="actinidos" class="fila-elementos"></div></div>
+    </div>
+  </main>
+
+  <div id="modal" class="modal oculto" role="dialog" aria-modal="true">
+    <div class="tarjeta-detalle">
+      <button id="cerrar" class="cerrar" aria-label="Cerrar">✕</button>
+      <div class="detalle-head">
+        <div id="dSimbolo" class="d-simbolo">H</div>
+        <div>
+          <div id="dNumero" class="d-numero">1</div>
+          <h2 id="dNombre">Hidrógeno</h2>
+          <p id="dFamilia" class="d-fam">No metal</p>
+        </div>
+      </div>
+      <dl class="detalle-lista">
+        <div><dt data-i18n="masa">Masa atómica</dt><dd id="dMasa"></dd></div>
+        <div><dt data-i18n="estado">Estado</dt><dd id="dEstado"></dd></div>
+        <div><dt data-i18n="grupo">Grupo / Periodo</dt><dd id="dGrupo"></dd></div>
+        <div class="ancho"><dt data-i18n="uso">Usos</dt><dd id="dUso"></dd></div>
+        <div class="ancho"><dt>💡</dt><dd id="dCur"></dd></div>
+      </dl>
+    </div>
+  </div>
+
+  <footer>
+    <small data-i18n="footer">118 elementos · Datos educativos · Abre con un servidor local: python3 -m http.server</small>
+  </footer>
+
+  <script>
+const DATOS_EMBEBIDOS = [
+  {
+    "numero": 1,
+    "simbolo": "H",
+    "nombre_es": "Hidrógeno",
+    "nombre_en": "Hydrogen",
+    "masa": 1.008,
+    "familia": "no-metal",
+    "grupo": 1,
+    "periodo": 1,
+    "estado": "gas",
+    "configuracion": "1s¹",
+    "uso_es": "Combustible de cohetes y pilas de hidrógeno",
+    "uso_en": "Rocket fuel and hydrogen batteries",
+    "curiosidad_es": "El elemento más abundante del universo",
+    "curiosidad_en": "The most abundant element in the universe"
+  },
+  {
+    "numero": 2,
+    "simbolo": "He",
+    "nombre_es": "Helio",
+    "nombre_en": "Helium",
+    "masa": 4.0026,
+    "familia": "gas-noble",
+    "grupo": 18,
+    "periodo": 1,
+    "estado": "gas",
+    "configuracion": "1s²",
+    "uso_es": "Globos, resonancia magnética y refrigeración",
+    "uso_en": "Balloons, MRI and cooling",
+    "curiosidad_es": "No forma compuestos casi nunca y hace que la voz suene aguda",
+    "curiosidad_en": "It almost never forms compounds and makes your voice squeaky"
+  },
+  {
+    "numero": 3,
+    "simbolo": "Li",
+    "nombre_es": "Litio",
+    "nombre_en": "Lithium",
+    "masa": 6.94,
+    "familia": "metal-alcalino",
+    "grupo": 1,
+    "periodo": 2,
+    "estado": "solido",
+    "configuracion": "[He] 2s¹",
+    "uso_es": "Baterías recargables de móviles y portátiles",
+    "uso_en": "Rechargeable batteries in phones and laptops",
+    "curiosidad_es": "El metal más ligero: flota en aceite",
+    "curiosidad_en": "The lightest metal: it floats in oil"
+  },
+  {
+    "numero": 4,
+    "simbolo": "Be",
+    "nombre_es": "Berilio",
+    "nombre_en": "Beryllium",
+    "masa": 9.0122,
+    "familia": "alcalinoterreo",
+    "grupo": 2,
+    "periodo": 2,
+    "estado": "solido",
+    "configuracion": "[He] 2s²",
+    "uso_es": "Ventanas de rayos X y piezas aeroespaciales",
+    "uso_en": "X-ray windows and aerospace parts",
+    "curiosidad_es": "Es ligero pero muy rígido y tóxico",
+    "curiosidad_en": "It is light but very stiff and toxic"
+  },
+  {
+    "numero": 5,
+    "simbolo": "B",
+    "nombre_es": "Boro",
+    "nombre_en": "Boron",
+    "masa": 10.81,
+    "familia": "metaloide",
+    "grupo": 13,
+    "periodo": 2,
+    "estado": "solido",
+    "configuracion": "[He] 2s² 2p¹",
+    "uso_es": "Vidrio resistente al calor (pyrex) y detergentes",
+    "uso_en": "Heat-resistant glass (pyrex) and detergents",
+    "curiosidad_es": "Es esencial para las plantas en pequeñas dosis",
+    "curiosidad_en": "It is essential for plants in small doses"
+  },
+  {
+    "numero": 6,
+    "simbolo": "C",
+    "nombre_es": "Carbono",
+    "nombre_en": "Carbon",
+    "masa": 12.011,
+    "familia": "no-metal",
+    "grupo": 14,
+    "periodo": 2,
+    "estado": "solido",
+    "configuracion": "[He] 2s² 2p²",
+    "uso_es": "Base de la vida, diamantes y grafito",
+    "uso_en": "Basis of life, diamonds and graphite",
+    "curiosidad_es": "El diamante y el grafito son carbono puro",
+    "curiosidad_en": "Diamond and graphite are pure carbon"
+  },
+  {
+    "numero": 7,
+    "simbolo": "N",
+    "nombre_es": "Nitrógeno",
+    "nombre_en": "Nitrogen",
+    "masa": 14.007,
+    "familia": "no-metal",
+    "grupo": 15,
+    "periodo": 2,
+    "estado": "gas",
+    "configuracion": "[He] 2s² 2p³",
+    "uso_es": "Fertilizantes y atmósfera (78% del aire)",
+    "uso_en": "Fertilizers and atmosphere (78% of air)",
+    "curiosidad_es": "Los seres vivos lo necesitan para las proteínas",
+    "curiosidad_en": "Living things need it for proteins"
+  },
+  {
+    "numero": 8,
+    "simbolo": "O",
+    "nombre_es": "Oxígeno",
+    "nombre_en": "Oxygen",
+    "masa": 15.999,
+    "familia": "no-metal",
+    "grupo": 16,
+    "periodo": 2,
+    "estado": "gas",
+    "configuracion": "[He] 2s² 2p⁴",
+    "uso_es": "Respiración y hospitales",
+    "uso_en": "Breathing and hospitals",
+    "curiosidad_es": "Sin oxígeno no hay fuego ni respiración",
+    "curiosidad_en": "Without oxygen there is no fire or breathing"
+  },
+  {
+    "numero": 9,
+    "simbolo": "F",
+    "nombre_es": "Flúor",
+    "nombre_en": "Fluorine",
+    "masa": 18.998,
+    "familia": "halogeno",
+    "grupo": 17,
+    "periodo": 2,
+    "estado": "gas",
+    "configuracion": "[He] 2s² 2p⁵",
+    "uso_es": "Pasta de dientes y teflón",
+    "uso_en": "Toothpaste and Teflon",
+    "curiosidad_es": "El elemento más reactivo de todos",
+    "curiosidad_en": "The most reactive element of all"
+  },
+  {
+    "numero": 10,
+    "simbolo": "Ne",
+    "nombre_es": "Neón",
+    "nombre_en": "Neon",
+    "masa": 20.18,
+    "familia": "gas-noble",
+    "grupo": 18,
+    "periodo": 2,
+    "estado": "gas",
+    "configuracion": "[He] 2s² 2p⁶",
+    "uso_es": "Letreros luminosos de colores",
+    "uso_en": "Colorful neon signs",
+    "curiosidad_es": "Brilla rojo-anaranjado en tubos de descarga",
+    "curiosidad_en": "It glows red-orange in discharge tubes"
+  },
+  {
+    "numero": 11,
+    "simbolo": "Na",
+    "nombre_es": "Sodio",
+    "nombre_en": "Sodium",
+    "masa": 22.99,
+    "familia": "metal-alcalino",
+    "grupo": 1,
+    "periodo": 3,
+    "estado": "solido",
+    "configuracion": "[Ne] 3s¹",
+    "uso_es": "Sal de mesa y lámparas de calle",
+    "uso_en": "Table salt and street lamps",
+    "curiosidad_es": "Reacciona con violencia con el agua",
+    "curiosidad_en": "It reacts violently with water"
+  },
+  {
+    "numero": 12,
+    "simbolo": "Mg",
+    "nombre_es": "Magnesio",
+    "nombre_en": "Magnesium",
+    "masa": 24.305,
+    "familia": "alcalinoterreo",
+    "grupo": 2,
+    "periodo": 3,
+    "estado": "solido",
+    "configuracion": "[Ne] 3s²",
+    "uso_es": "Bengalas, bicicletas y clorofila",
+    "uso_en": "Flares, bicycles and chlorophyll",
+    "curiosidad_es": "Arde con una luz blanca muy brillante",
+    "curiosidad_en": "It burns with a very bright white light"
+  },
+  {
+    "numero": 13,
+    "simbolo": "Al",
+    "nombre_es": "Aluminio",
+    "nombre_en": "Aluminium",
+    "masa": 26.982,
+    "familia": "metal-postransicion",
+    "grupo": 13,
+    "periodo": 3,
+    "estado": "solido",
+    "configuracion": "[Ne] 3s² 3p¹",
+    "uso_es": "Latas, aviones y ventanas",
+    "uso_en": "Cans, airplanes and windows",
+    "curiosidad_es": "El metal más abundante en la corteza terrestre",
+    "curiosidad_en": "The most abundant metal in Earth's crust"
+  },
+  {
+    "numero": 14,
+    "simbolo": "Si",
+    "nombre_es": "Silicio",
+    "nombre_en": "Silicon",
+    "masa": 28.085,
+    "familia": "metaloide",
+    "grupo": 14,
+    "periodo": 3,
+    "estado": "solido",
+    "configuracion": "[Ne] 3s² 3p²",
+    "uso_es": "Chips, paneles solares y vidrio",
+    "uso_en": "Chips, solar panels and glass",
+    "curiosidad_es": "La arena de la playa es dióxido de silicio",
+    "curiosidad_en": "Beach sand is silicon dioxide"
+  },
+  {
+    "numero": 15,
+    "simbolo": "P",
+    "nombre_es": "Fósforo",
+    "nombre_en": "Phosphorus",
+    "masa": 30.974,
+    "familia": "no-metal",
+    "grupo": 15,
+    "periodo": 3,
+    "estado": "solido",
+    "configuracion": "[Ne] 3s² 3p³",
+    "uso_es": "Cerillas, fertilizantes y ADN",
+    "uso_en": "Matches, fertilizers and DNA",
+    "curiosidad_es": "Brilla en la oscuridad (fósforo blanco)",
+    "curiosidad_en": "It glows in the dark (white phosphorus)"
+  },
+  {
+    "numero": 16,
+    "simbolo": "S",
+    "nombre_es": "Azufre",
+    "nombre_en": "Sulfur",
+    "masa": 32.06,
+    "familia": "no-metal",
+    "grupo": 16,
+    "periodo": 3,
+    "estado": "solido",
+    "configuracion": "[Ne] 3s² 3p⁴",
+    "uso_es": "Pólvora, vulcanizar caucho",
+    "uso_en": "Gunpowder, vulcanizing rubber",
+    "curiosidad_es": "Huele a huevo podrido",
+    "curiosidad_en": "It smells like rotten eggs"
+  },
+  {
+    "numero": 17,
+    "simbolo": "Cl",
+    "nombre_es": "Cloro",
+    "nombre_en": "Chlorine",
+    "masa": 35.45,
+    "familia": "halogeno",
+    "grupo": 17,
+    "periodo": 3,
+    "estado": "gas",
+    "configuracion": "[Ne] 3s² 3p⁵",
+    "uso_es": "Desinfectar piscinas y agua potable",
+    "uso_en": "Disinfecting pools and drinking water",
+    "curiosidad_es": "Se usó como arma en la Primera Guerra Mundial",
+    "curiosidad_en": "It was used as a weapon in WWI"
+  },
+  {
+    "numero": 18,
+    "simbolo": "Ar",
+    "nombre_es": "Argón",
+    "nombre_en": "Argon",
+    "masa": 39.948,
+    "familia": "gas-noble",
+    "grupo": 18,
+    "periodo": 3,
+    "estado": "gas",
+    "configuracion": "[Ne] 3s² 3p⁶",
+    "uso_es": "Bombillas y soldadura",
+    "uso_en": "Light bulbs and welding",
+    "curiosidad_es": "El 1% del aire que respiras es argón",
+    "curiosidad_en": "1% of the air you breathe is argon"
+  },
+  {
+    "numero": 19,
+    "simbolo": "K",
+    "nombre_es": "Potasio",
+    "nombre_en": "Potassium",
+    "masa": 39.098,
+    "familia": "metal-alcalino",
+    "grupo": 1,
+    "periodo": 4,
+    "estado": "solido",
+    "configuracion": "[Ar] 4s¹",
+    "uso_es": "Fertilizantes y funcionamiento de nervios",
+    "uso_en": "Fertilizers and nerve function",
+    "curiosidad_es": "Tu cuerpo lo necesita para el corazón",
+    "curiosidad_en": "Your body needs it for the heart"
+  },
+  {
+    "numero": 20,
+    "simbolo": "Ca",
+    "nombre_es": "Calcio",
+    "nombre_en": "Calcium",
+    "masa": 40.078,
+    "familia": "alcalinoterreo",
+    "grupo": 2,
+    "periodo": 4,
+    "estado": "solido",
+    "configuracion": "[Ar] 4s²",
+    "uso_es": "Huesos, dientes y cemento",
+    "uso_en": "Bones, teeth and cement",
+    "curiosidad_es": "Tus huesos son sobre todo calcio",
+    "curiosidad_en": "Your bones are mostly calcium"
+  },
+  {
+    "numero": 21,
+    "simbolo": "Sc",
+    "nombre_es": "Escandio",
+    "nombre_en": "Scandium",
+    "masa": 44.956,
+    "familia": "metal-transicion",
+    "grupo": 3,
+    "periodo": 4,
+    "estado": "solido",
+    "configuracion": "[Ar] 3d¹ 4s²",
+    "uso_es": "Bicicletas y bates de béisbol",
+    "uso_en": "Bicycles and baseball bats",
+    "curiosidad_es": "Hace aleaciones muy ligeras y fuertes",
+    "curiosidad_en": "It makes very light, strong alloys"
+  },
+  {
+    "numero": 22,
+    "simbolo": "Ti",
+    "nombre_es": "Titanio",
+    "nombre_en": "Titanium",
+    "masa": 47.867,
+    "familia": "metal-transicion",
+    "grupo": 4,
+    "periodo": 4,
+    "estado": "solido",
+    "configuracion": "[Ar] 3d² 4s²",
+    "uso_es": "Aviones, implantes y prótesis",
+    "uso_en": "Airplanes, implants and prostheses",
+    "curiosidad_es": "Tan fuerte como el acero pero mucho más ligero",
+    "curiosidad_en": "As strong as steel but much lighter"
+  },
+  {
+    "numero": 23,
+    "simbolo": "V",
+    "nombre_es": "Vanadio",
+    "nombre_en": "Vanadium",
+    "masa": 50.942,
+    "familia": "metal-transicion",
+    "grupo": 5,
+    "periodo": 4,
+    "estado": "solido",
+    "configuracion": "[Ar] 3d³ 4s²",
+    "uso_es": "Herramientas y ejes de acero",
+    "uso_en": "Tools and steel axles",
+    "curiosidad_es": "Sus compuestos tienen muchos colores",
+    "curiosidad_en": "Its compounds show many colors"
+  },
+  {
+    "numero": 24,
+    "simbolo": "Cr",
+    "nombre_es": "Cromo",
+    "nombre_en": "Chromium",
+    "masa": 51.996,
+    "familia": "metal-transicion",
+    "grupo": 6,
+    "periodo": 4,
+    "estado": "solido",
+    "configuracion": "[Ar] 3d⁵ 4s¹",
+    "uso_es": "Acero inoxidable y cromados",
+    "uso_en": "Stainless steel and chrome plating",
+    "curiosidad_es": "Da el color rojo al rubí",
+    "curiosidad_en": "It gives ruby its red color"
+  },
+  {
+    "numero": 25,
+    "simbolo": "Mn",
+    "nombre_es": "Manganeso",
+    "nombre_en": "Manganese",
+    "masa": 54.938,
+    "familia": "metal-transicion",
+    "grupo": 7,
+    "periodo": 4,
+    "estado": "solido",
+    "configuracion": "[Ar] 3d⁵ 4s²",
+    "uso_es": "Acero y pilas alcalinas",
+    "uso_en": "Steel and alkaline batteries",
+    "curiosidad_es": "Esencial para fotosíntesis",
+    "curiosidad_en": "Essential for photosynthesis"
+  },
+  {
+    "numero": 26,
+    "simbolo": "Fe",
+    "nombre_es": "Hierro",
+    "nombre_en": "Iron",
+    "masa": 55.845,
+    "familia": "metal-transicion",
+    "grupo": 8,
+    "periodo": 4,
+    "estado": "solido",
+    "configuracion": "[Ar] 3d⁶ 4s²",
+    "uso_es": "Construcción, coches y sangre (hemoglobina)",
+    "uso_en": "Construction, cars and blood (hemoglobin)",
+    "curiosidad_es": "Tu sangre es roja por el hierro",
+    "curiosidad_en": "Your blood is red because of iron"
+  },
+  {
+    "numero": 27,
+    "simbolo": "Co",
+    "nombre_es": "Cobalto",
+    "nombre_en": "Cobalt",
+    "masa": 58.933,
+    "familia": "metal-transicion",
+    "grupo": 9,
+    "periodo": 4,
+    "estado": "solido",
+    "configuracion": "[Ar] 3d⁷ 4s²",
+    "uso_es": "Imanes, baterías y color azul",
+    "uso_en": "Magnets, batteries and blue color",
+    "curiosidad_es": "El vidrio azul contiene cobalto",
+    "curiosidad_en": "Blue glass contains cobalt"
+  },
+  {
+    "numero": 28,
+    "simbolo": "Ni",
+    "nombre_es": "Níquel",
+    "nombre_en": "Nickel",
+    "masa": 58.693,
+    "familia": "metal-transicion",
+    "grupo": 10,
+    "periodo": 4,
+    "estado": "solido",
+    "configuracion": "[Ar] 3d⁸ 4s²",
+    "uso_es": "Monedas y acero inoxidable",
+    "uso_en": "Coins and stainless steel",
+    "curiosidad_es": "Muchas monedas llevan níquel",
+    "curiosidad_en": "Many coins contain nickel"
+  },
+  {
+    "numero": 29,
+    "simbolo": "Cu",
+    "nombre_es": "Cobre",
+    "nombre_en": "Copper",
+    "masa": 63.546,
+    "familia": "metal-transicion",
+    "grupo": 11,
+    "periodo": 4,
+    "estado": "solido",
+    "configuracion": "[Ar] 3d¹⁰ 4s¹",
+    "uso_es": "Cables eléctricos y tuberías",
+    "uso_en": "Electric wires and pipes",
+    "curiosidad_es": "El mejor conductor doméstico de electricidad",
+    "curiosidad_en": "The best household conductor of electricity"
+  },
+  {
+    "numero": 30,
+    "simbolo": "Zn",
+    "nombre_es": "Zinc",
+    "nombre_en": "Zinc",
+    "masa": 65.38,
+    "familia": "metal-transicion",
+    "grupo": 12,
+    "periodo": 4,
+    "estado": "solido",
+    "configuracion": "[Ar] 3d¹⁰ 4s²",
+    "uso_es": "Galvanizar acero y cremas solares",
+    "uso_en": "Galvanizing steel and sunscreens",
+    "curiosidad_es": "Protege al hierro del óxido",
+    "curiosidad_en": "It protects iron from rust"
+  },
+  {
+    "numero": 31,
+    "simbolo": "Ga",
+    "nombre_es": "Galio",
+    "nombre_en": "Gallium",
+    "masa": 69.723,
+    "familia": "metal-postransicion",
+    "grupo": 13,
+    "periodo": 4,
+    "estado": "solido",
+    "configuracion": "[Ar] 3d¹⁰ 4s² 4p¹",
+    "uso_es": "LEDs y termómetros",
+    "uso_en": "LEDs and thermometers",
+    "curiosidad_es": "Se funde en tu mano (29,8 °C)",
+    "curiosidad_en": "It melts in your hand (29.8 °C)"
+  },
+  {
+    "numero": 32,
+    "simbolo": "Ge",
+    "nombre_es": "Germanio",
+    "nombre_en": "Germanium",
+    "masa": 72.63,
+    "familia": "metaloide",
+    "grupo": 14,
+    "periodo": 4,
+    "estado": "solido",
+    "configuracion": "[Ar] 3d¹⁰ 4s² 4p²",
+    "uso_es": "Fibra óptica y transistores",
+    "uso_en": "Fiber optics and transistors",
+    "curiosidad_es": "Clave en los primeros transistores",
+    "curiosidad_en": "Key in the first transistors"
+  },
+  {
+    "numero": 33,
+    "simbolo": "As",
+    "nombre_es": "Arsénico",
+    "nombre_en": "Arsenic",
+    "masa": 74.922,
+    "familia": "metaloide",
+    "grupo": 15,
+    "periodo": 4,
+    "estado": "solido",
+    "configuracion": "[Ar] 3d¹⁰ 4s² 4p³",
+    "uso_es": "Madera tratada y semiconductores",
+    "uso_en": "Treated wood and semiconductors",
+    "curiosidad_es": "Famoso veneno de novelas de misterio",
+    "curiosidad_en": "Famous poison in mystery novels"
+  },
+  {
+    "numero": 34,
+    "simbolo": "Se",
+    "nombre_es": "Selenio",
+    "nombre_en": "Selenium",
+    "masa": 78.971,
+    "familia": "no-metal",
+    "grupo": 16,
+    "periodo": 4,
+    "estado": "solido",
+    "configuracion": "[Ar] 3d¹⁰ 4s² 4p⁴",
+    "uso_es": "Paneles solares y champús",
+    "uso_en": "Solar panels and shampoos",
+    "curiosidad_es": "Conduce mejor con luz (fotoconductor)",
+    "curiosidad_en": "It conducts better with light"
+  },
+  {
+    "numero": 35,
+    "simbolo": "Br",
+    "nombre_es": "Bromo",
+    "nombre_en": "Bromine",
+    "masa": 79.904,
+    "familia": "halogeno",
+    "grupo": 17,
+    "periodo": 4,
+    "estado": "liquido",
+    "configuracion": "[Ar] 3d¹⁰ 4s² 4p⁵",
+    "uso_es": "Retardantes de llama y fotografía",
+    "uso_en": "Flame retardants and photography",
+    "curiosidad_es": "Uno de los dos elementos líquidos a temperatura ambiente",
+    "curiosidad_en": "One of two liquid elements at room temperature"
+  },
+  {
+    "numero": 36,
+    "simbolo": "Kr",
+    "nombre_es": "Kriptón",
+    "nombre_en": "Krypton",
+    "masa": 83.798,
+    "familia": "gas-noble",
+    "grupo": 18,
+    "periodo": 4,
+    "estado": "gas",
+    "configuracion": "[Ar] 3d¹⁰ 4s² 4p⁶",
+    "uso_es": "Focos fotográficos y láseres",
+    "uso_en": "Photo flashes and lasers",
+    "curiosidad_es": "Superman no es lo único con este nombre",
+    "curiosidad_en": "Superman is not the only thing with this name"
+  },
+  {
+    "numero": 37,
+    "simbolo": "Rb",
+    "nombre_es": "Rubidio",
+    "nombre_en": "Rubidium",
+    "masa": 85.468,
+    "familia": "metal-alcalino",
+    "grupo": 1,
+    "periodo": 5,
+    "estado": "solido",
+    "configuracion": "[Kr] 5s¹",
+    "uso_es": "Relojes atómicos e investigación",
+    "uso_en": "Atomic clocks and research",
+    "curiosidad_es": "Arde en contacto con el aire",
+    "curiosidad_en": "It ignites in contact with air"
+  },
+  {
+    "numero": 38,
+    "simbolo": "Sr",
+    "nombre_es": "Estroncio",
+    "nombre_en": "Strontium",
+    "masa": 87.62,
+    "familia": "alcalinoterreo",
+    "grupo": 2,
+    "periodo": 5,
+    "estado": "solido",
+    "configuracion": "[Kr] 5s²",
+    "uso_es": "Fuegos artificiales rojos",
+    "uso_en": "Red fireworks",
+    "curiosidad_es": "Da color rojo intenso a los fuegos artificiales",
+    "curiosidad_en": "It gives fireworks an intense red color"
+  },
+  {
+    "numero": 39,
+    "simbolo": "Y",
+    "nombre_es": "Itrio",
+    "nombre_en": "Yttrium",
+    "masa": 88.906,
+    "familia": "metal-transicion",
+    "grupo": 3,
+    "periodo": 5,
+    "estado": "solido",
+    "configuracion": "[Kr] 4d¹ 5s²",
+    "uso_es": "LEDs rojos y superconductores",
+    "uso_en": "Red LEDs and superconductors",
+    "curiosidad_es": "Las piedras YAG de láser lo contienen",
+    "curiosidad_en": "Laser YAG crystals contain it"
+  },
+  {
+    "numero": 40,
+    "simbolo": "Zr",
+    "nombre_es": "Circonio",
+    "nombre_en": "Zirconium",
+    "masa": 91.224,
+    "familia": "metal-transicion",
+    "grupo": 4,
+    "periodo": 5,
+    "estado": "solido",
+    "configuracion": "[Kr] 4d² 5s²",
+    "uso_es": "Joyas (circonita) y reactores",
+    "uso_en": "Jewels (zirconia) and reactors",
+    "curiosidad_es": "La circonita imita al diamante",
+    "curiosidad_en": "Zirconia imitates diamond"
+  },
+  {
+    "numero": 41,
+    "simbolo": "Nb",
+    "nombre_es": "Niobio",
+    "nombre_en": "Niobium",
+    "masa": 92.906,
+    "familia": "metal-transicion",
+    "grupo": 5,
+    "periodo": 5,
+    "estado": "solido",
+    "configuracion": "[Kr] 4d⁴ 5s¹",
+    "uso_es": "Imanes superconductores y joyería",
+    "uso_en": "Superconducting magnets and jewelry",
+    "curiosidad_es": "Se usa en aceleradores de partículas",
+    "curiosidad_en": "Used in particle accelerators"
+  },
+  {
+    "numero": 42,
+    "simbolo": "Mo",
+    "nombre_es": "Molibdeno",
+    "nombre_en": "Molybdenum",
+    "masa": 95.95,
+    "familia": "metal-transicion",
+    "grupo": 6,
+    "periodo": 5,
+    "estado": "solido",
+    "configuracion": "[Kr] 4d⁵ 5s¹",
+    "uso_es": "Acero resistente y enzimas",
+    "uso_en": "Strong steel and enzymes",
+    "curiosidad_es": "Las plantas lo necesitan para crecer",
+    "curiosidad_en": "Plants need it to grow"
+  },
+  {
+    "numero": 43,
+    "simbolo": "Tc",
+    "nombre_es": "Tecnecio",
+    "nombre_en": "Technetium",
+    "masa": 98,
+    "familia": "metal-transicion",
+    "grupo": 7,
+    "periodo": 5,
+    "estado": "solido",
+    "configuracion": "[Kr] 4d⁵ 5s²",
+    "uso_es": "Medicina nuclear (imágenes)",
+    "uso_en": "Nuclear medicine (imaging)",
+    "curiosidad_es": "Primer elemento creado artificialmente",
+    "curiosidad_en": "First artificially made element"
+  },
+  {
+    "numero": 44,
+    "simbolo": "Ru",
+    "nombre_es": "Rutenio",
+    "nombre_en": "Ruthenium",
+    "masa": 101.07,
+    "familia": "metal-transicion",
+    "grupo": 8,
+    "periodo": 5,
+    "estado": "solido",
+    "configuracion": "[Kr] 4d⁷ 5s¹",
+    "uso_es": "Contactos eléctricos y plumas",
+    "uso_en": "Electric contacts and pens",
+    "curiosidad_es": "Endurece el platino",
+    "curiosidad_en": "It hardens platinum"
+  },
+  {
+    "numero": 45,
+    "simbolo": "Rh",
+    "nombre_es": "Rodio",
+    "nombre_en": "Rhodium",
+    "masa": 102.91,
+    "familia": "metal-transicion",
+    "grupo": 9,
+    "periodo": 5,
+    "estado": "solido",
+    "configuracion": "[Kr] 4d⁸ 5s¹",
+    "uso_es": "Catalizadores de coches",
+    "uso_en": "Car catalytic converters",
+    "curiosidad_es": "Uno de los metales más caros",
+    "curiosidad_en": "One of the most expensive metals"
+  },
+  {
+    "numero": 46,
+    "simbolo": "Pd",
+    "nombre_es": "Paladio",
+    "nombre_en": "Palladium",
+    "masa": 106.42,
+    "familia": "metal-transicion",
+    "grupo": 10,
+    "periodo": 5,
+    "estado": "solido",
+    "configuracion": "[Kr] 4d¹⁰",
+    "uso_es": "Catalizadores y joyería",
+    "uso_en": "Catalysts and jewelry",
+    "curiosidad_es": "Absorbe mucho hidrógeno",
+    "curiosidad_en": "It absorbs lots of hydrogen"
+  },
+  {
+    "numero": 47,
+    "simbolo": "Ag",
+    "nombre_es": "Plata",
+    "nombre_en": "Silver",
+    "masa": 107.87,
+    "familia": "metal-transicion",
+    "grupo": 11,
+    "periodo": 5,
+    "estado": "solido",
+    "configuracion": "[Kr] 4d¹⁰ 5s¹",
+    "uso_es": "Joyas, monedas y fotografía",
+    "uso_en": "Jewelry, coins and photography",
+    "curiosidad_es": "El mejor conductor eléctrico conocido",
+    "curiosidad_en": "The best known electric conductor"
+  },
+  {
+    "numero": 48,
+    "simbolo": "Cd",
+    "nombre_es": "Cadmio",
+    "nombre_en": "Cadmium",
+    "masa": 112.41,
+    "familia": "metal-transicion",
+    "grupo": 12,
+    "periodo": 5,
+    "estado": "solido",
+    "configuracion": "[Kr] 4d¹⁰ 5s²",
+    "uso_es": "Pilas Ni-Cd y pigmentos",
+    "uso_en": "Ni-Cd batteries and pigments",
+    "curiosidad_es": "Tóxico: ya casi no se usa en juguetes",
+    "curiosidad_en": "Toxic: barely used in toys now"
+  },
+  {
+    "numero": 49,
+    "simbolo": "In",
+    "nombre_es": "Indio",
+    "nombre_en": "Indium",
+    "masa": 114.82,
+    "familia": "metal-postransicion",
+    "grupo": 13,
+    "periodo": 5,
+    "estado": "solido",
+    "configuracion": "[Kr] 4d¹⁰ 5s² 5p¹",
+    "uso_es": "Pantallas táctiles (ITO)",
+    "uso_en": "Touch screens (ITO)",
+    "curiosidad_es": "Tan blando que se corta con cuchillo",
+    "curiosidad_en": "So soft it cuts with a knife"
+  },
+  {
+    "numero": 50,
+    "simbolo": "Sn",
+    "nombre_es": "Estaño",
+    "nombre_en": "Tin",
+    "masa": 118.71,
+    "familia": "metal-postransicion",
+    "grupo": 14,
+    "periodo": 5,
+    "estado": "solido",
+    "configuracion": "[Kr] 4d¹⁰ 5s² 5p²",
+    "uso_es": "Latas de conserva y soldadura",
+    "uso_en": "Cans and solder",
+    "curiosidad_es": "La Edad del Bronce lo hizo famoso",
+    "curiosidad_en": "The Bronze Age made it famous"
+  },
+  {
+    "numero": 51,
+    "simbolo": "Sb",
+    "nombre_es": "Antimonio",
+    "nombre_en": "Antimony",
+    "masa": 121.76,
+    "familia": "metaloide",
+    "grupo": 15,
+    "periodo": 5,
+    "estado": "solido",
+    "configuracion": "[Kr] 4d¹⁰ 5s² 5p³",
+    "uso_es": "Cerillas y semiconductores",
+    "uso_en": "Matches and semiconductors",
+    "curiosidad_es": "Los egipcios lo usaban como maquillaje",
+    "curiosidad_en": "Egyptians used it as makeup"
+  },
+  {
+    "numero": 52,
+    "simbolo": "Te",
+    "nombre_es": "Telurio",
+    "nombre_en": "Tellurium",
+    "masa": 127.6,
+    "familia": "metaloide",
+    "grupo": 16,
+    "periodo": 5,
+    "estado": "solido",
+    "configuracion": "[Kr] 4d¹⁰ 5s² 5p⁴",
+    "uso_es": "Paneles solares y DVDs",
+    "uso_en": "Solar panels and DVDs",
+    "curiosidad_es": "Muy raro en la Tierra",
+    "curiosidad_en": "Very rare on Earth"
+  },
+  {
+    "numero": 53,
+    "simbolo": "I",
+    "nombre_es": "Yodo",
+    "nombre_en": "Iodine",
+    "masa": 126.9,
+    "familia": "halogeno",
+    "grupo": 17,
+    "periodo": 5,
+    "estado": "solido",
+    "configuracion": "[Kr] 4d¹⁰ 5s² 5p⁵",
+    "uso_es": "Desinfectante y tiroides",
+    "uso_en": "Disinfectant and thyroid",
+    "curiosidad_es": "Tu tiroides lo necesita",
+    "curiosidad_en": "Your thyroid needs it"
+  },
+  {
+    "numero": 54,
+    "simbolo": "Xe",
+    "nombre_es": "Xenón",
+    "nombre_en": "Xenon",
+    "masa": 131.29,
+    "familia": "gas-noble",
+    "grupo": 18,
+    "periodo": 5,
+    "estado": "gas",
+    "configuracion": "[Kr] 4d¹⁰ 5s² 5p⁶",
+    "uso_es": "Faros de coche y anestesia",
+    "uso_en": "Car headlights and anesthesia",
+    "curiosidad_es": "Se usa como anestésico",
+    "curiosidad_en": "Used as an anesthetic"
+  },
+  {
+    "numero": 55,
+    "simbolo": "Cs",
+    "nombre_es": "Cesio",
+    "nombre_en": "Cesium",
+    "masa": 132.91,
+    "familia": "metal-alcalino",
+    "grupo": 1,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 6s¹",
+    "uso_es": "Relojes atómicos",
+    "uso_en": "Atomic clocks",
+    "curiosidad_es": "Define el segundo oficial",
+    "curiosidad_en": "It defines the official second"
+  },
+  {
+    "numero": 56,
+    "simbolo": "Ba",
+    "nombre_es": "Bario",
+    "nombre_en": "Barium",
+    "masa": 137.33,
+    "familia": "alcalinoterreo",
+    "grupo": 2,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 6s²",
+    "uso_es": "Fuegos verdes y radiografías",
+    "uso_en": "Green fireworks and X-rays",
+    "curiosidad_es": "Da color verde a los fuegos artificiales",
+    "curiosidad_en": "It gives fireworks green color"
+  },
+  {
+    "numero": 57,
+    "simbolo": "La",
+    "nombre_es": "Lantano",
+    "nombre_en": "Lanthanum",
+    "masa": 138.91,
+    "familia": "lantanido",
+    "grupo": 3,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 5d¹ 6s²",
+    "uso_es": "Baterías híbridas y lentes",
+    "uso_en": "Hybrid batteries and lenses",
+    "curiosidad_es": "Presta su nombre a los lantánidos",
+    "curiosidad_en": "It names the lanthanides"
+  },
+  {
+    "numero": 58,
+    "simbolo": "Ce",
+    "nombre_es": "Cerio",
+    "nombre_en": "Cerium",
+    "masa": 140.12,
+    "familia": "lantanido",
+    "grupo": 3,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹ 5d¹ 6s²",
+    "uso_es": "Mecheros (piedras de encendedor)",
+    "uso_en": "Lighters (flints)",
+    "curiosidad_es": "El más abundante de las tierras raras",
+    "curiosidad_en": "The most abundant rare earth"
+  },
+  {
+    "numero": 59,
+    "simbolo": "Pr",
+    "nombre_es": "Praseodimio",
+    "nombre_en": "Praseodymium",
+    "masa": 140.91,
+    "familia": "lantanido",
+    "grupo": 3,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f³ 6s²",
+    "uso_es": "Imanes potentes y gafas",
+    "uso_en": "Strong magnets and glasses",
+    "curiosidad_es": "Forma imanes muy potentes con neodimio",
+    "curiosidad_en": "Forms very strong magnets with neodymium"
+  },
+  {
+    "numero": 60,
+    "simbolo": "Nd",
+    "nombre_es": "Neodimio",
+    "nombre_en": "Neodymium",
+    "masa": 144.24,
+    "familia": "lantanido",
+    "grupo": 3,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f⁴ 6s²",
+    "uso_es": "Imanes de auriculares y motores",
+    "uso_en": "Headphone magnets and motors",
+    "curiosidad_es": "Los imanes más fuertes del mundo",
+    "curiosidad_en": "The strongest magnets in the world"
+  },
+  {
+    "numero": 61,
+    "simbolo": "Pm",
+    "nombre_es": "Prometio",
+    "nombre_en": "Promethium",
+    "masa": 145,
+    "familia": "lantanido",
+    "grupo": 3,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f⁵ 6s²",
+    "uso_es": "Pintura luminosa (antes)",
+    "uso_en": "Glow paint (in the past)",
+    "curiosidad_es": "Es radiactivo y brilla",
+    "curiosidad_en": "It is radioactive and glows"
+  },
+  {
+    "numero": 62,
+    "simbolo": "Sm",
+    "nombre_es": "Samario",
+    "nombre_en": "Samarium",
+    "masa": 150.36,
+    "familia": "lantanido",
+    "grupo": 3,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f⁶ 6s²",
+    "uso_es": "Imanes de alta temperatura",
+    "uso_en": "High-temperature magnets",
+    "curiosidad_es": "Funciona en motores muy calientes",
+    "curiosidad_en": "Works in very hot engines"
+  },
+  {
+    "numero": 63,
+    "simbolo": "Eu",
+    "nombre_es": "Europio",
+    "nombre_en": "Europium",
+    "masa": 151.96,
+    "familia": "lantanido",
+    "grupo": 3,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f⁷ 6s²",
+    "uso_es": "Billetes anti-falsificación",
+    "uso_en": "Anti-counterfeit banknotes",
+    "curiosidad_es": "Hace brillar los billetes en UV",
+    "curiosidad_en": "Makes banknotes glow under UV"
+  },
+  {
+    "numero": 64,
+    "simbolo": "Gd",
+    "nombre_es": "Gadolinio",
+    "nombre_en": "Gadolinium",
+    "masa": 157.25,
+    "familia": "lantanido",
+    "grupo": 3,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f⁷ 5d¹ 6s²",
+    "uso_es": "Resonancias magnéticas",
+    "uso_en": "MRI scans",
+    "curiosidad_es": "El más magnético a baja temperatura",
+    "curiosidad_en": "Most magnetic at low temperature"
+  },
+  {
+    "numero": 65,
+    "simbolo": "Tb",
+    "nombre_es": "Terbio",
+    "nombre_en": "Terbium",
+    "masa": 158.93,
+    "familia": "lantanido",
+    "grupo": 3,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f⁹ 6s²",
+    "uso_es": "Luces verdes y altavoces",
+    "uso_en": "Green lights and speakers",
+    "curiosidad_es": "Da color verde a las lámparas",
+    "curiosidad_en": "Gives lamps green color"
+  },
+  {
+    "numero": 66,
+    "simbolo": "Dy",
+    "nombre_es": "Disprosio",
+    "nombre_en": "Dysprosium",
+    "masa": 162.5,
+    "familia": "lantanido",
+    "grupo": 3,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹⁰ 6s²",
+    "uso_es": "Motores eléctricos",
+    "uso_en": "Electric motors",
+    "curiosidad_es": "Su nombre significa difícil de conseguir",
+    "curiosidad_en": "Its name means hard to get"
+  },
+  {
+    "numero": 67,
+    "simbolo": "Ho",
+    "nombre_es": "Holmio",
+    "nombre_en": "Holmium",
+    "masa": 164.93,
+    "familia": "lantanido",
+    "grupo": 3,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹¹ 6s²",
+    "uso_es": "Láseres médicos e imanes",
+    "uso_en": "Medical lasers and magnets",
+    "curiosidad_es": "El más magnético que existe",
+    "curiosidad_en": "The most magnetic of all"
+  },
+  {
+    "numero": 68,
+    "simbolo": "Er",
+    "nombre_es": "Erbio",
+    "nombre_en": "Erbium",
+    "masa": 167.26,
+    "familia": "lantanido",
+    "grupo": 3,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹² 6s²",
+    "uso_es": "Fibra óptica de internet",
+    "uso_en": "Internet fiber optics",
+    "curiosidad_es": "Amplifica internet por fibra",
+    "curiosidad_en": "It boosts fiber internet"
+  },
+  {
+    "numero": 69,
+    "simbolo": "Tm",
+    "nombre_es": "Tulio",
+    "nombre_en": "Thulium",
+    "masa": 168.93,
+    "familia": "lantanido",
+    "grupo": 3,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹³ 6s²",
+    "uso_es": "Láseres portátiles",
+    "uso_en": "Portable lasers",
+    "curiosidad_es": "Una de las tierras raras más escasas",
+    "curiosidad_en": "One of the scarcest rare earths"
+  },
+  {
+    "numero": 70,
+    "simbolo": "Yb",
+    "nombre_es": "Iterbio",
+    "nombre_en": "Ytterbium",
+    "masa": 173.05,
+    "familia": "lantanido",
+    "grupo": 3,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹⁴ 6s²",
+    "uso_es": "Láseres y relojes atómicos",
+    "uso_en": "Lasers and atomic clocks",
+    "curiosidad_es": "Se usa en relojes ultra precisos",
+    "curiosidad_en": "Used in ultra-precise clocks"
+  },
+  {
+    "numero": 71,
+    "simbolo": "Lu",
+    "nombre_es": "Lutecio",
+    "nombre_en": "Lutetium",
+    "masa": 174.97,
+    "familia": "lantanido",
+    "grupo": 3,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹⁴ 5d¹ 6s²",
+    "uso_es": "Medicina contra el cáncer",
+    "uso_en": "Cancer medicine",
+    "curiosidad_es": "El más denso de los lantánidos",
+    "curiosidad_en": "The densest lanthanide"
+  },
+  {
+    "numero": 72,
+    "simbolo": "Hf",
+    "nombre_es": "Hafnio",
+    "nombre_en": "Hafnium",
+    "masa": 178.49,
+    "familia": "metal-transicion",
+    "grupo": 4,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹⁴ 5d² 6s²",
+    "uso_es": "Barras de reactores y chips",
+    "uso_en": "Reactor rods and chips",
+    "curiosidad_es": "Absorbe neutrones en reactores",
+    "curiosidad_en": "It absorbs neutrons in reactors"
+  },
+  {
+    "numero": 73,
+    "simbolo": "Ta",
+    "nombre_es": "Tántalo",
+    "nombre_en": "Tantalum",
+    "masa": 180.95,
+    "familia": "metal-transicion",
+    "grupo": 5,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹⁴ 5d³ 6s²",
+    "uso_es": "Condensadores de móviles",
+    "uso_en": "Phone capacitors",
+    "curiosidad_es": "Tu móvil tiene un poco de tántalo",
+    "curiosidad_en": "Your phone has a bit of tantalum"
+  },
+  {
+    "numero": 74,
+    "simbolo": "W",
+    "nombre_es": "Wolframio",
+    "nombre_en": "Tungsten",
+    "masa": 183.84,
+    "familia": "metal-transicion",
+    "grupo": 6,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹⁴ 5d⁴ 6s²",
+    "uso_es": "Filamentos y brocas",
+    "uso_en": "Filaments and drills",
+    "curiosidad_es": "El metal con mayor punto de fusión",
+    "curiosidad_en": "The metal with highest melting point"
+  },
+  {
+    "numero": 75,
+    "simbolo": "Re",
+    "nombre_es": "Renio",
+    "nombre_en": "Rhenium",
+    "masa": 186.21,
+    "familia": "metal-transicion",
+    "grupo": 7,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹⁴ 5d⁵ 6s²",
+    "uso_es": "Motores de avión",
+    "uso_en": "Jet engines",
+    "curiosidad_es": "Uno de los elementos más raros",
+    "curiosidad_en": "One of the rarest elements"
+  },
+  {
+    "numero": 76,
+    "simbolo": "Os",
+    "nombre_es": "Osmio",
+    "nombre_en": "Osmium",
+    "masa": 190.23,
+    "familia": "metal-transicion",
+    "grupo": 8,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹⁴ 5d⁶ 6s²",
+    "uso_es": "Plumas estilográficas",
+    "uso_en": "Fountain pens",
+    "curiosidad_es": "El elemento natural más denso",
+    "curiosidad_en": "The densest natural element"
+  },
+  {
+    "numero": 77,
+    "simbolo": "Ir",
+    "nombre_es": "Iridio",
+    "nombre_en": "Iridium",
+    "masa": 192.22,
+    "familia": "metal-transicion",
+    "grupo": 9,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹⁴ 5d⁷ 6s²",
+    "uso_es": "Bujías y crisoles",
+    "uso_en": "Spark plugs and crucibles",
+    "curiosidad_es": "Llegó en el meteorito de los dinosaurios",
+    "curiosidad_en": "It came in the dinosaur meteorite"
+  },
+  {
+    "numero": 78,
+    "simbolo": "Pt",
+    "nombre_es": "Platino",
+    "nombre_en": "Platinum",
+    "masa": 195.08,
+    "familia": "metal-transicion",
+    "grupo": 10,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹⁴ 5d⁹ 6s¹",
+    "uso_es": "Joyas y catalizadores",
+    "uso_en": "Jewelry and catalysts",
+    "curiosidad_es": "Más valioso que el oro a veces",
+    "curiosidad_en": "Sometimes more valuable than gold"
+  },
+  {
+    "numero": 79,
+    "simbolo": "Au",
+    "nombre_es": "Oro",
+    "nombre_en": "Gold",
+    "masa": 196.97,
+    "familia": "metal-transicion",
+    "grupo": 11,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹⁴ 5d¹⁰ 6s¹",
+    "uso_es": "Joyas, monedas y electrónica",
+    "uso_en": "Jewelry, coins and electronics",
+    "curiosidad_es": "Nunca se oxida",
+    "curiosidad_en": "It never rusts"
+  },
+  {
+    "numero": 80,
+    "simbolo": "Hg",
+    "nombre_es": "Mercurio",
+    "nombre_en": "Mercury",
+    "masa": 200.59,
+    "familia": "metal-transicion",
+    "grupo": 12,
+    "periodo": 6,
+    "estado": "liquido",
+    "configuracion": "[Xe] 4f¹⁴ 5d¹⁰ 6s²",
+    "uso_es": "Termómetros antiguos",
+    "uso_en": "Old thermometers",
+    "curiosidad_es": "Líquido y muy tóxico",
+    "curiosidad_en": "Liquid and very toxic"
+  },
+  {
+    "numero": 81,
+    "simbolo": "Tl",
+    "nombre_es": "Talio",
+    "nombre_en": "Thallium",
+    "masa": 204.38,
+    "familia": "metal-postransicion",
+    "grupo": 13,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p¹",
+    "uso_es": "Electrónica (poco uso)",
+    "uso_en": "Electronics (rare use)",
+    "curiosidad_es": "Extremadamente venenoso",
+    "curiosidad_en": "Extremely poisonous"
+  },
+  {
+    "numero": 82,
+    "simbolo": "Pb",
+    "nombre_es": "Plomo",
+    "nombre_en": "Lead",
+    "masa": 207.2,
+    "familia": "metal-postransicion",
+    "grupo": 14,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p²",
+    "uso_es": "Baterías de coche",
+    "uso_en": "Car batteries",
+    "curiosidad_es": "Los romanos lo usaban en tuberías",
+    "curiosidad_en": "Romans used it in pipes"
+  },
+  {
+    "numero": 83,
+    "simbolo": "Bi",
+    "nombre_es": "Bismuto",
+    "nombre_en": "Bismuth",
+    "masa": 208.98,
+    "familia": "metal-postransicion",
+    "grupo": 15,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p³",
+    "uso_es": "Medicinas estomacales",
+    "uso_en": "Stomach medicines",
+    "curiosidad_es": "Forma cristales de colores",
+    "curiosidad_en": "It forms colorful crystals"
+  },
+  {
+    "numero": 84,
+    "simbolo": "Po",
+    "nombre_es": "Polonio",
+    "nombre_en": "Polonium",
+    "masa": 209,
+    "familia": "metal-postransicion",
+    "grupo": 16,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁴",
+    "uso_es": "Investigación espacial",
+    "uso_en": "Space research",
+    "curiosidad_es": "Descubierto por Marie Curie",
+    "curiosidad_en": "Discovered by Marie Curie"
+  },
+  {
+    "numero": 85,
+    "simbolo": "At",
+    "nombre_es": "Astato",
+    "nombre_en": "Astatine",
+    "masa": 210,
+    "familia": "halogeno",
+    "grupo": 17,
+    "periodo": 6,
+    "estado": "solido",
+    "configuracion": "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁵",
+    "uso_es": "Investigación médica",
+    "uso_en": "Medical research",
+    "curiosidad_es": "El elemento natural más raro",
+    "curiosidad_en": "The rarest natural element"
+  },
+  {
+    "numero": 86,
+    "simbolo": "Rn",
+    "nombre_es": "Radón",
+    "nombre_en": "Radon",
+    "masa": 222,
+    "familia": "gas-noble",
+    "grupo": 18,
+    "periodo": 6,
+    "estado": "gas",
+    "configuracion": "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁶",
+    "uso_es": "Casi sin usos (peligroso)",
+    "uso_en": "Almost no uses (dangerous)",
+    "curiosidad_es": "Gas radiactivo en sótanos",
+    "curiosidad_en": "Radioactive gas in basements"
+  },
+  {
+    "numero": 87,
+    "simbolo": "Fr",
+    "nombre_es": "Francio",
+    "nombre_en": "Francium",
+    "masa": 223,
+    "familia": "metal-alcalino",
+    "grupo": 1,
+    "periodo": 7,
+    "estado": "solido",
+    "configuracion": "[Rn] 7s¹",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Muy raro y radiactivo",
+    "curiosidad_en": "Very rare and radioactive"
+  },
+  {
+    "numero": 88,
+    "simbolo": "Ra",
+    "nombre_es": "Radio",
+    "nombre_en": "Radium",
+    "masa": 226,
+    "familia": "alcalinoterreo",
+    "grupo": 2,
+    "periodo": 7,
+    "estado": "solido",
+    "configuracion": "[Rn] 7s²",
+    "uso_es": "Antes relojes luminosos",
+    "uso_en": "Once glow clocks",
+    "curiosidad_es": "Marie Curie lo descubrió",
+    "curiosidad_en": "Marie Curie discovered it"
+  },
+  {
+    "numero": 89,
+    "simbolo": "Ac",
+    "nombre_es": "Actinio",
+    "nombre_en": "Actinium",
+    "masa": 227,
+    "familia": "actinido",
+    "grupo": 3,
+    "periodo": 7,
+    "estado": "solido",
+    "configuracion": "[Rn] 6d¹ 7s²",
+    "uso_es": "Medicina e investigación",
+    "uso_en": "Medicine and research",
+    "curiosidad_es": "Brilla en la oscuridad",
+    "curiosidad_en": "It glows in the dark"
+  },
+  {
+    "numero": 90,
+    "simbolo": "Th",
+    "nombre_es": "Torio",
+    "nombre_en": "Thorium",
+    "masa": 232.04,
+    "familia": "actinido",
+    "grupo": 3,
+    "periodo": 7,
+    "estado": "solido",
+    "configuracion": "[Rn] 6d² 7s²",
+    "uso_es": "Posible combustible nuclear",
+    "uso_en": "Possible nuclear fuel",
+    "curiosidad_es": "Podría ser energía del futuro",
+    "curiosidad_en": "It could be future energy"
+  },
+  {
+    "numero": 91,
+    "simbolo": "Pa",
+    "nombre_es": "Protactinio",
+    "nombre_en": "Protactinium",
+    "masa": 231.04,
+    "familia": "actinido",
+    "grupo": 3,
+    "periodo": 7,
+    "estado": "solido",
+    "configuracion": "[Rn] 5f² 6d¹ 7s²",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Raro y muy radiactivo",
+    "curiosidad_en": "Rare and very radioactive"
+  },
+  {
+    "numero": 92,
+    "simbolo": "U",
+    "nombre_es": "Uranio",
+    "nombre_en": "Uranium",
+    "masa": 238.03,
+    "familia": "actinido",
+    "grupo": 3,
+    "periodo": 7,
+    "estado": "solido",
+    "configuracion": "[Rn] 5f³ 6d¹ 7s²",
+    "uso_es": "Energía nuclear",
+    "uso_en": "Nuclear energy",
+    "curiosidad_es": "Alimenta centrales nucleares",
+    "curiosidad_en": "It powers nuclear plants"
+  },
+  {
+    "numero": 93,
+    "simbolo": "Np",
+    "nombre_es": "Neptunio",
+    "nombre_en": "Neptunium",
+    "masa": 237,
+    "familia": "actinido",
+    "grupo": 3,
+    "periodo": 7,
+    "estado": "solido",
+    "configuracion": "[Rn] 5f⁴ 6d¹ 7s²",
+    "uso_es": "Detectores e investigación",
+    "uso_en": "Detectors and research",
+    "curiosidad_es": "Nombrado por el planeta Neptuno",
+    "curiosidad_en": "Named after planet Neptune"
+  },
+  {
+    "numero": 94,
+    "simbolo": "Pu",
+    "nombre_es": "Plutonio",
+    "nombre_en": "Plutonium",
+    "masa": 244,
+    "familia": "actinido",
+    "grupo": 3,
+    "periodo": 7,
+    "estado": "solido",
+    "configuracion": "[Rn] 5f⁶ 7s²",
+    "uso_es": "Energía espacial (sondas)",
+    "uso_en": "Space energy (probes)",
+    "curiosidad_es": "Las sondas Voyager lo usan",
+    "curiosidad_en": "Voyager probes use it"
+  },
+  {
+    "numero": 95,
+    "simbolo": "Am",
+    "nombre_es": "Americio",
+    "nombre_en": "Americium",
+    "masa": 243,
+    "familia": "actinido",
+    "grupo": 3,
+    "periodo": 7,
+    "estado": "solido",
+    "configuracion": "[Rn] 5f⁷ 7s²",
+    "uso_es": "Detectores de humo",
+    "uso_en": "Smoke detectors",
+    "curiosidad_es": "Hay un poco en tu detector de humo",
+    "curiosidad_en": "There is some in your smoke detector"
+  },
+  {
+    "numero": 96,
+    "simbolo": "Cm",
+    "nombre_es": "Curio",
+    "nombre_en": "Curium",
+    "masa": 247,
+    "familia": "actinido",
+    "grupo": 3,
+    "periodo": 7,
+    "estado": "solido",
+    "configuracion": "[Rn] 5f⁷ 6d¹ 7s²",
+    "uso_es": "Energía espacial",
+    "uso_en": "Space energy",
+    "curiosidad_es": "Homenaje a los Curie",
+    "curiosidad_en": "Tribute to the Curies"
+  },
+  {
+    "numero": 97,
+    "simbolo": "Bk",
+    "nombre_es": "Berkelio",
+    "nombre_en": "Berkelium",
+    "masa": 247,
+    "familia": "actinido",
+    "grupo": 3,
+    "periodo": 7,
+    "estado": "solido",
+    "configuracion": "[Rn] 5f⁹ 7s²",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Hecho en laboratorio (California)",
+    "curiosidad_en": "Made in lab (California)"
+  },
+  {
+    "numero": 98,
+    "simbolo": "Cf",
+    "nombre_es": "Californio",
+    "nombre_en": "Californium",
+    "masa": 251,
+    "familia": "actinido",
+    "grupo": 3,
+    "periodo": 7,
+    "estado": "solido",
+    "configuracion": "[Rn] 5f¹⁰ 7s²",
+    "uso_es": "Detectores de neutrones",
+    "uso_en": "Neutron detectors",
+    "curiosidad_es": "Muy caro de producir",
+    "curiosidad_en": "Very expensive to produce"
+  },
+  {
+    "numero": 99,
+    "simbolo": "Es",
+    "nombre_es": "Einstenio",
+    "nombre_en": "Einsteinium",
+    "masa": 252,
+    "familia": "actinido",
+    "grupo": 3,
+    "periodo": 7,
+    "estado": "solido",
+    "configuracion": "[Rn] 5f¹¹ 7s²",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Homenaje a Einstein",
+    "curiosidad_en": "Tribute to Einstein"
+  },
+  {
+    "numero": 100,
+    "simbolo": "Fm",
+    "nombre_es": "Fermio",
+    "nombre_en": "Fermium",
+    "masa": 257,
+    "familia": "actinido",
+    "grupo": 3,
+    "periodo": 7,
+    "estado": "solido",
+    "configuracion": "[Rn] 5f¹² 7s²",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Hallado en restos de bomba H",
+    "curiosidad_en": "Found in H-bomb debris"
+  },
+  {
+    "numero": 101,
+    "simbolo": "Md",
+    "nombre_es": "Mendelevio",
+    "nombre_en": "Mendelevium",
+    "masa": 258,
+    "familia": "actinido",
+    "grupo": 3,
+    "periodo": 7,
+    "estado": "solido",
+    "configuracion": "[Rn] 5f¹³ 7s²",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Homenaje a Mendeléiev",
+    "curiosidad_en": "Tribute to Mendeleev"
+  },
+  {
+    "numero": 102,
+    "simbolo": "No",
+    "nombre_es": "Nobelio",
+    "nombre_en": "Nobelium",
+    "masa": 259,
+    "familia": "actinido",
+    "grupo": 3,
+    "periodo": 7,
+    "estado": "solido",
+    "configuracion": "[Rn] 5f¹⁴ 7s²",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Homenaje a Alfred Nobel",
+    "curiosidad_en": "Tribute to Alfred Nobel"
+  },
+  {
+    "numero": 103,
+    "simbolo": "Lr",
+    "nombre_es": "Lawrencio",
+    "nombre_en": "Lawrencium",
+    "masa": 266,
+    "familia": "actinido",
+    "grupo": 3,
+    "periodo": 7,
+    "estado": "solido",
+    "configuracion": "[Rn] 5f¹⁴ 7s² 7p¹",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Homenaje a E. Lawrence",
+    "curiosidad_en": "Tribute to E. Lawrence"
+  },
+  {
+    "numero": 104,
+    "simbolo": "Rf",
+    "nombre_es": "Rutherfordio",
+    "nombre_en": "Rutherfordium",
+    "masa": 267,
+    "familia": "metal-transicion",
+    "grupo": 4,
+    "periodo": 7,
+    "estado": "desconocido",
+    "configuracion": "[Rn] 5f¹⁴ 6d² 7s²",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Homenaje a Rutherford",
+    "curiosidad_en": "Tribute to Rutherford"
+  },
+  {
+    "numero": 105,
+    "simbolo": "Db",
+    "nombre_es": "Dubnio",
+    "nombre_en": "Dubnium",
+    "masa": 268,
+    "familia": "metal-transicion",
+    "grupo": 5,
+    "periodo": 7,
+    "estado": "desconocido",
+    "configuracion": "[Rn] 5f¹⁴ 6d³ 7s²",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Nombrado por Dubná (Rusia)",
+    "curiosidad_en": "Named after Dubna (Russia)"
+  },
+  {
+    "numero": 106,
+    "simbolo": "Sg",
+    "nombre_es": "Seaborgio",
+    "nombre_en": "Seaborgium",
+    "masa": 269,
+    "familia": "metal-transicion",
+    "grupo": 6,
+    "periodo": 7,
+    "estado": "desconocido",
+    "configuracion": "[Rn] 5f¹⁴ 6d⁴ 7s²",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Homenaje a Glenn Seaborg",
+    "curiosidad_en": "Tribute to Glenn Seaborg"
+  },
+  {
+    "numero": 107,
+    "simbolo": "Bh",
+    "nombre_es": "Bohrio",
+    "nombre_en": "Bohrium",
+    "masa": 270,
+    "familia": "metal-transicion",
+    "grupo": 7,
+    "periodo": 7,
+    "estado": "desconocido",
+    "configuracion": "[Rn] 5f¹⁴ 6d⁵ 7s²",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Homenaje a Niels Bohr",
+    "curiosidad_en": "Tribute to Niels Bohr"
+  },
+  {
+    "numero": 108,
+    "simbolo": "Hs",
+    "nombre_es": "Hassio",
+    "nombre_en": "Hassium",
+    "masa": 277,
+    "familia": "metal-transicion",
+    "grupo": 8,
+    "periodo": 7,
+    "estado": "desconocido",
+    "configuracion": "[Rn] 5f¹⁴ 6d⁶ 7s²",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Nombrado por Hesse (Alemania)",
+    "curiosidad_en": "Named after Hesse (Germany)"
+  },
+  {
+    "numero": 109,
+    "simbolo": "Mt",
+    "nombre_es": "Meitnerio",
+    "nombre_en": "Meitnerium",
+    "masa": 278,
+    "familia": "metal-transicion",
+    "grupo": 9,
+    "periodo": 7,
+    "estado": "desconocido",
+    "configuracion": "[Rn] 5f¹⁴ 6d⁷ 7s²",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Homenaje a Lise Meitner",
+    "curiosidad_en": "Tribute to Lise Meitner"
+  },
+  {
+    "numero": 110,
+    "simbolo": "Ds",
+    "nombre_es": "Darmstadio",
+    "nombre_en": "Darmstadtium",
+    "masa": 281,
+    "familia": "metal-transicion",
+    "grupo": 10,
+    "periodo": 7,
+    "estado": "desconocido",
+    "configuracion": "[Rn] 5f¹⁴ 6d⁸ 7s²",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Nombrado por Darmstadt",
+    "curiosidad_en": "Named after Darmstadt"
+  },
+  {
+    "numero": 111,
+    "simbolo": "Rg",
+    "nombre_es": "Roentgenio",
+    "nombre_en": "Roentgenium",
+    "masa": 282,
+    "familia": "metal-transicion",
+    "grupo": 11,
+    "periodo": 7,
+    "estado": "desconocido",
+    "configuracion": "[Rn] 5f¹⁴ 6d⁹ 7s²",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Homenaje a Röntgen (rayos X)",
+    "curiosidad_en": "Tribute to Röntgen (X-rays)"
+  },
+  {
+    "numero": 112,
+    "simbolo": "Cn",
+    "nombre_es": "Copernicio",
+    "nombre_en": "Copernicium",
+    "masa": 285,
+    "familia": "metal-transicion",
+    "grupo": 12,
+    "periodo": 7,
+    "estado": "desconocido",
+    "configuracion": "[Rn] 5f¹⁴ 6d¹⁰ 7s²",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Homenaje a Copérnico",
+    "curiosidad_en": "Tribute to Copernicus"
+  },
+  {
+    "numero": 113,
+    "simbolo": "Nh",
+    "nombre_es": "Nihonio",
+    "nombre_en": "Nihonium",
+    "masa": 286,
+    "familia": "metal-postransicion",
+    "grupo": 13,
+    "periodo": 7,
+    "estado": "desconocido",
+    "configuracion": "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p¹",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Primer elemento de Japón (nihon)",
+    "curiosidad_en": "First element from Japan (nihon)"
+  },
+  {
+    "numero": 114,
+    "simbolo": "Fl",
+    "nombre_es": "Flerovio",
+    "nombre_en": "Flerovium",
+    "masa": 289,
+    "familia": "metal-postransicion",
+    "grupo": 14,
+    "periodo": 7,
+    "estado": "desconocido",
+    "configuracion": "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p²",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Nombrado por el laboratorio Flerov",
+    "curiosidad_en": "Named after Flerov lab"
+  },
+  {
+    "numero": 115,
+    "simbolo": "Mc",
+    "nombre_es": "Moscovio",
+    "nombre_en": "Moscovium",
+    "masa": 290,
+    "familia": "metal-postransicion",
+    "grupo": 15,
+    "periodo": 7,
+    "estado": "desconocido",
+    "configuracion": "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p³",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Nombrado por Moscú",
+    "curiosidad_en": "Named after Moscow"
+  },
+  {
+    "numero": 116,
+    "simbolo": "Lv",
+    "nombre_es": "Livermorio",
+    "nombre_en": "Livermorium",
+    "masa": 293,
+    "familia": "metal-postransicion",
+    "grupo": 16,
+    "periodo": 7,
+    "estado": "desconocido",
+    "configuracion": "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁴",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Nombrado por Livermore (EE.UU.)",
+    "curiosidad_en": "Named after Livermore (USA)"
+  },
+  {
+    "numero": 117,
+    "simbolo": "Ts",
+    "nombre_es": "Teneso",
+    "nombre_en": "Tennessine",
+    "masa": 294,
+    "familia": "halogeno",
+    "grupo": 17,
+    "periodo": 7,
+    "estado": "desconocido",
+    "configuracion": "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁵",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "Nombrado por Tennessee",
+    "curiosidad_en": "Named after Tennessee"
+  },
+  {
+    "numero": 118,
+    "simbolo": "Og",
+    "nombre_es": "Oganesón",
+    "nombre_en": "Oganesson",
+    "masa": 294,
+    "familia": "gas-noble",
+    "grupo": 18,
+    "periodo": 7,
+    "estado": "desconocido",
+    "configuracion": "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁶",
+    "uso_es": "Solo investigación",
+    "uso_en": "Research only",
+    "curiosidad_es": "El elemento más pesado conocido",
+    "curiosidad_en": "The heaviest known element"
+  }
+];
+
+const TEXTOS = {
+  es: {
+    title: "Tabla Periódica Interactiva",
+    subtitle: "Pulsa cualquier elemento para ver sus propiedades",
+    search: "Buscar por nombre, símbolo o número…",
+    clear: "Limpiar",
+    todasFam: "Todas las familias",
+    todosEst: "Todos los estados",
+    masa: "Masa atómica", estado: "Estado", grupo: "Grupo / Periodo",
+    uso: "Usos",
+    footer: "118 elementos · Datos educativos · Abre con un servidor local: python3 -m http.server",
+    contador: n => `${n} elementos`,
+    familias: {"no-metal":"No metal","gas-noble":"Gas noble","metal-alcalino":"Metal alcalino","alcalinoterreo":"Alcalinotérreo","metaloide":"Metaloide","halogeno":"Halógeno","metal-transicion":"Metal de transición","metal-postransicion":"Metal postransición","lantanido":"Lantánido","actinido":"Actínido"},
+    estados: {solido:"Sólido",liquido:"Líquido",gas:"Gas",desconocido:"Desconocido"}
+  },
+  en: {
+    title: "Interactive Periodic Table",
+    subtitle: "Click any element to see its properties",
+    search: "Search by name, symbol or number…",
+    clear: "Clear",
+    todasFam: "All families",
+    todosEst: "All states",
+    masa: "Atomic mass", estado: "State", grupo: "Group / Period",
+    uso: "Uses",
+    footer: "118 elements · Educational data · Open with a local server: python3 -m http.server",
+    contador: n => `${n} elements`,
+    familias: {"no-metal":"Nonmetal","gas-noble":"Noble gas","metal-alcalino":"Alkali metal","alcalinoterreo":"Alkaline earth","metaloide":"Metalloid","halogeno":"Halogen","metal-transicion":"Transition metal","metal-postransicion":"Post-transition metal","lantanido":"Lanthanide","actinido":"Actinide"},
+    estados: {solido:"Solid",liquido:"Liquid",gas:"Gas",desconocido:"Unknown"}
+  }
+};
+
+let datos = [];
+let lang = localStorage.getItem("tp-lang") || "es";
+const $ = id => document.getElementById(id);
+const T = () => TEXTOS[lang];
+const nombre = e => lang === "es" ? e.nombre_es : e.nombre_en;
+
+function aplicarTextos() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const k = el.dataset.i18n;
+    if (T()[k] && typeof T()[k] === "string") el.textContent = T()[k];
+  });
+  $("buscador").placeholder = T().search;
+  $("lang").value = lang;
+  construirFiltros();
+  construirLeyenda();
+  actualizarContador(datos.filter(visible).length);
+}
+
+function construirFiltros() {
+  const fc = $("filtroFamilia"), fe = $("filtroEstado");
+  const vc = fc.value || "", ve = fe.value || "";
+  fc.innerHTML = `<option value="">${T().todasFam}</option>` +
+    Object.entries(T().familias).map(([k,v]) => `<option value="${k}">${v}</option>`).join("");
+  fe.innerHTML = `<option value="">${T().todosEst}</option>` +
+    Object.entries(T().estados).map(([k,v]) => `<option value="${k}">${v}</option>`).join("");
+  if ([...fc.options].some(o => o.value === vc)) fc.value = vc;
+  if ([...fe.options].some(o => o.value === ve)) fe.value = ve;
+}
+
+function construirLeyenda() {
+  $("leyenda").innerHTML = Object.entries(T().familias).map(([k,v]) =>
+    `<button class="chip fam-${k.replace(/-/g,"-")}" data-fam="${k}">${v}</button>`).join("");
+  document.querySelectorAll("#leyenda .chip").forEach(ch => {
+    ch.onclick = () => {
+      $("filtroFamilia").value = $("filtroFamilia").value === ch.dataset.fam ? "" : ch.dataset.fam;
+      filtrar();
+    };
+  });
+}
+
+function tarjeta(e) {
+  const d = document.createElement("button");
+  d.className = `elemento fam-${e.familia}`;
+  d.style.gridColumn = e.grupo;
+  d.style.gridRow = e.periodo;
+  d.setAttribute("role", "gridcell");
+  d.tabIndex = 0;
+  d.dataset.numero = e.numero;
+  d.innerHTML = `<span class="num">${e.numero}</span><span class="sim">${e.simbolo}</span><span class="nom">${nombre(e)}</span>`;
+  d.onclick = () => mostrar(e);
+  d.onkeydown = ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); mostrar(e); } };
+  return d;
+}
+
+function render() {
+  const tabla = $("tabla"), lan = $("lantanidos"), act = $("actinidos");
+  tabla.innerHTML = ""; lan.innerHTML = ""; act.innerHTML = "";
+  datos.forEach(e => {
+    const esF = e.familia === "lantanido" || e.familia === "actinido";
+    const t = tarjeta(e);
+    if (!esF) { t.style.gridColumn = e.grupo; t.style.gridRow = e.periodo; tabla.appendChild(t); }
+    else { t.style.gridColumn = ""; t.style.gridRow = ""; (e.familia === "lantanido" ? lan : act).appendChild(t); }
+  });
+  // Marcadores de hueco La-Lu y Ac-Lr en la tabla principal
+  const hueco1 = document.createElement("div");
+  hueco1.className = "elemento fam-lantanido";
+  hueco1.style.gridColumn = 3; hueco1.style.gridRow = 6;
+  hueco1.innerHTML = `<span class="sim">57–71</span><span class="nom">La–Lu</span>`;
+  hueco1.onclick = () => document.querySelector(".bloque-f").scrollIntoView({behavior:"smooth"});
+  const hueco2 = hueco1.cloneNode(true);
+  hueco2.className = "elemento fam-actinido";
+  hueco2.style.gridRow = 7;
+  hueco2.innerHTML = `<span class="sim">89–103</span><span class="nom">Ac–Lr</span>`;
+  hueco2.onclick = hueco1.onclick;
+  tabla.appendChild(hueco1); tabla.appendChild(hueco2);
+  filtrar();
+}
+
+function visible(e) {
+  const q = $("buscador").value.trim().toLowerCase();
+  const c = $("filtroFamilia").value, s = $("filtroEstado").value;
+  if (c && e.familia !== c) return false;
+  if (s && e.estado !== s) return false;
+  if (q && !(e.nombre_es.toLowerCase().includes(q) || e.nombre_en.toLowerCase().includes(q) ||
+    e.simbolo.toLowerCase() === q || String(e.numero) === q)) return false;
+  return true;
+}
+
+function filtrar() {
+  let n = 0;
+  document.querySelectorAll(".elemento[data-numero]").forEach(el => {
+    const e = datos.find(x => x.numero === +el.dataset.numero);
+    const ok = visible(e);
+    el.classList.toggle("atenuado", !ok);
+    if (ok) n++;
+  });
+  actualizarContador(n);
+}
+
+function actualizarContador(n) { $("contador").textContent = T().contador(n); }
+
+function mostrar(e) {
+  document.querySelectorAll(".elemento.seleccionado").forEach(x => x.classList.remove("seleccionado"));
+  document.querySelector(`.elemento[data-numero="${e.numero}"]`)?.classList.add("seleccionado");
+  $("dSimbolo").textContent = e.simbolo;
+  $("dSimbolo").className = `d-simbolo fam-${e.familia}`;
+  $("dNumero").textContent = "#" + e.numero;
+  $("dNombre").textContent = nombre(e);
+  $("dFamilia").textContent = T().familias[e.familia];
+  $("dMasa").textContent = e.masa + " u";
+  $("dEstado").textContent = T().estados[e.estado];
+  $("dGrupo").textContent = lang === "es" ? `Grupo ${e.grupo}, Periodo ${e.periodo}` : `Group ${e.grupo}, Period ${e.periodo}`;
+  $("dUso").textContent = lang === "es" ? e.uso_es : e.uso_en;
+  $("dCur").textContent = "💡 " + (lang === "es" ? e.curiosidad_es : e.curiosidad_en);
+  $("modal").classList.remove("oculto");
+}
+
+function init() {
+  $("lang").value = lang;
+  $("lang").onchange = e => { lang = e.target.value; localStorage.setItem("tp-lang", lang); aplicarTextos(); render(); };
+  $("buscador").oninput = filtrar;
+  $("filtroFamilia").onchange = filtrar;
+  $("filtroEstado").onchange = filtrar;
+  $("limpiar").onclick = () => { $("buscador").value = ""; $("filtroFamilia").value = ""; $("filtroEstado").value = ""; filtrar(); };
+  $("cerrar").onclick = () => $("modal").classList.add("oculto");
+  $("modal").addEventListener("click", e => { if (e.target.id === "modal") $("modal").classList.add("oculto"); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") $("modal").classList.add("oculto"); });
+
+  // Datos embebidos para funcionar con file:// sin servidor
+  datos = DATOS_EMBEBIDOS;
+  aplicarTextos();
+  render();
+}
+init();
+
+</script>
+</body>
+</html>

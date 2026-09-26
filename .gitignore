@@ -1,0 +1,15 @@
+# Deps / OS
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dist / temporales
+dist/
+*.tmp

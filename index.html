@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="title">Tabla Periódica Interactiva</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1 data-i18n="title">Tabla Periódica Interactiva</h1>
+      <p class="subtitle" data-i18n="subtitle">Pulsa cualquier elemento para ver sus propiedades</p>
+    </div>
+    <div class="topbar-right">
+      <label class="switch">
+        <input type="checkbox" id="modoJuego" aria-label="Modo juego / Game mode" />
+        <span class="slider" aria-hidden="true"></span>
+        <span class="switch-label" data-i18n="game">🎮 Juego</span>
+      </label>
+      <div class="lang-wrap">
+        <label for="lang">🌐</label>
+        <select id="lang" aria-label="Idioma / Language">
+          <option value="es">Español</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <section class="controls">
+    <input id="buscador" type="search" data-i18n-ph="search" placeholder="Buscar por nombre, símbolo o número…" autocomplete="off" />
+    <select id="filtroFamilia" aria-label="Familia"></select>
+    <select id="filtroEstado" aria-label="Estado"></select>
+    <button id="limpiar" data-i18n="clear">Limpiar</button>
+    <span id="contador" class="contador"></span>
+  </section>
+
+  <section id="gameBar" class="game-bar oculto" aria-live="polite">
+    <span id="gScore" class="g-score"></span>
+    <span id="gIntentos" class="g-score"></span>
+    <span id="gPrecision" class="g-score"></span>
+    <button id="reiniciarJuego" data-i18n="restart">Reiniciar</button>
+    <button id="revelarTodo" data-i18n="giveUp">Rendirse</button>
+  </section>
+
+  <section class="leyenda" id="leyenda"></section>
+
+  <main>
+    <div id="tabla" class="tabla" role="grid" aria-label="Tabla periódica"></div>
+    <div class="bloque-f">
+      <div class="fila-f"><span class="etiqueta-f">57–71</span><div id="lantanidos" class="fila-elementos"></div></div>
+      <div class="fila-f"><span class="etiqueta-f">89–103</span><div id="actinidos" class="fila-elementos"></div></div>
+    </div>
+  </main>
+
+  <div id="modal" class="modal oculto" role="dialog" aria-modal="true">
+    <div class="tarjeta-detalle">
+      <button id="cerrar" class="cerrar" aria-label="Cerrar">✕</button>
+      <div class="detalle-head">
+        <div id="dSimbolo" class="d-simbolo">H</div>
+        <div>
+          <div id="dNumero" class="d-numero">1</div>
+          <h2 id="dNombre">Hidrógeno</h2>
+          <p id="dFamilia" class="d-fam">No metal</p>
+        </div>
+      </div>
+      <dl class="detalle-lista" id="detalleLista">
+        <div><dt data-i18n="masa">Masa atómica</dt><dd id="dMasa"></dd></div>
+        <div><dt data-i18n="estado">Estado</dt><dd id="dEstado"></dd></div>
+        <div><dt data-i18n="grupo">Grupo / Periodo</dt><dd id="dGrupo"></dd></div>
+        <div class="ancho"><dt data-i18n="uso">Usos</dt><dd id="dUso"></dd></div>
+        <div class="ancho"><dt>💡</dt><dd id="dCur"></dd></div>
+      </dl>
+      <div id="juegoZona" class="juego-zona oculto">
+        <p id="juegoPista" class="juego-pista"></p>
+        <input id="adivinanza" type="text" data-i18n-ph="guessPh" placeholder="Escribe símbolo o nombre…" autocomplete="off" />
+        <div class="juego-acciones">
+          <button id="comprobar" data-i18n="check">Comprobar</button>
+        </div>
+        <p id="mensajeJuego" class="juego-mensaje" aria-live="polite"></p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <small data-i18n="footer">118 elementos · Datos educativos · Abre con un servidor local: python3 -m http.server</small>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
