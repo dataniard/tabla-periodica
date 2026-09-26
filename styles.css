@@ -44,6 +44,17 @@ body {
   border: 1px solid #475569; cursor: pointer; background: var(--panel);
 }
 .chip.activo { outline: 2px solid var(--acento); }
+.chip[class*="fam-"] { color: #0f172a; border-color: transparent; font-weight: 600; }
+.chip.fam-no-metal { background: var(--no-metal); }
+.chip.fam-gas-noble { background: var(--gas-noble); }
+.chip.fam-metal-alcalino { background: var(--metal-alcalino); color: #fff; }
+.chip.fam-alcalinoterreo { background: var(--alcalinoterreo); }
+.chip.fam-metaloide { background: var(--metaloide); }
+.chip.fam-halogeno { background: var(--halogeno); }
+.chip.fam-metal-transicion { background: var(--metal-transicion); }
+.chip.fam-metal-postransicion { background: var(--metal-postransicion); }
+.chip.fam-lantanido { background: var(--lantanido); }
+.chip.fam-actinido { background: var(--actinido); color: #fff; }
 main { padding: 1rem 1.5rem 2rem; }
 .tabla {
   display: grid; grid-template-columns: repeat(18, minmax(52px, 1fr));

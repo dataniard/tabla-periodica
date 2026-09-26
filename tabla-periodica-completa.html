@@ -51,6 +51,17 @@ body {
   border: 1px solid #475569; cursor: pointer; background: var(--panel);
 }
 .chip.activo { outline: 2px solid var(--acento); }
+.chip[class*="fam-"] { color: #0f172a; border-color: transparent; font-weight: 600; }
+.chip.fam-no-metal { background: var(--no-metal); }
+.chip.fam-gas-noble { background: var(--gas-noble); }
+.chip.fam-metal-alcalino { background: var(--metal-alcalino); color: #fff; }
+.chip.fam-alcalinoterreo { background: var(--alcalinoterreo); }
+.chip.fam-metaloide { background: var(--metaloide); }
+.chip.fam-halogeno { background: var(--halogeno); }
+.chip.fam-metal-transicion { background: var(--metal-transicion); }
+.chip.fam-metal-postransicion { background: var(--metal-postransicion); }
+.chip.fam-lantanido { background: var(--lantanido); }
+.chip.fam-actinido { background: var(--actinido); color: #fff; }
 main { padding: 1rem 1.5rem 2rem; }
 .tabla {
   display: grid; grid-template-columns: repeat(18, minmax(52px, 1fr));
@@ -2346,6 +2357,7 @@ function render() {
   hueco1.onclick = () => gameMode
     ? document.querySelector(".bloque-f").scrollIntoView({behavior:"smooth"})
     : mostrarGrupo("lan");
+  hueco1.dataset.fam = "lantanido";
   const hueco2 = hueco1.cloneNode(true);
   hueco2.className = "elemento fam-actinido" + (gameMode ? " juego-oculto" : "");
   hueco2.style.gridRow = 7;
@@ -2355,6 +2367,7 @@ function render() {
   hueco2.onclick = () => gameMode
     ? document.querySelector(".bloque-f").scrollIntoView({behavior:"smooth"})
     : mostrarGrupo("act");
+  hueco2.dataset.fam = "actinido";
   tabla.appendChild(hueco1); tabla.appendChild(hueco2);
   filtrar();
 }
@@ -2372,6 +2385,7 @@ function visible(e) {
 function filtrar() {
   if (gameMode) {
     document.querySelectorAll(".elemento[data-numero]").forEach(el => el.classList.remove("atenuado"));
+    document.querySelectorAll(".elemento[data-fam]").forEach(el => el.classList.remove("atenuado"));
     return;
   }
   let n = 0;
@@ -2380,6 +2394,10 @@ function filtrar() {
     const ok = visible(e);
     el.classList.toggle("atenuado", !ok);
     if (ok) n++;
+  });
+  document.querySelectorAll(".elemento[data-fam]").forEach(h => {
+    const ok = datos.some(e => e.familia === h.dataset.fam && visible(e));
+    h.classList.toggle("atenuado", !ok);
   });
   actualizarContador(n);
 }

@@ -179,6 +179,7 @@ function render() {
   hueco1.onclick = () => gameMode
     ? document.querySelector(".bloque-f").scrollIntoView({behavior:"smooth"})
     : mostrarGrupo("lan");
+  hueco1.dataset.fam = "lantanido";
   const hueco2 = hueco1.cloneNode(true);
   hueco2.className = "elemento fam-actinido" + (gameMode ? " juego-oculto" : "");
   hueco2.style.gridRow = 7;
@@ -188,6 +189,7 @@ function render() {
   hueco2.onclick = () => gameMode
     ? document.querySelector(".bloque-f").scrollIntoView({behavior:"smooth"})
     : mostrarGrupo("act");
+  hueco2.dataset.fam = "actinido";
   tabla.appendChild(hueco1); tabla.appendChild(hueco2);
   filtrar();
 }
@@ -205,6 +207,7 @@ function visible(e) {
 function filtrar() {
   if (gameMode) {
     document.querySelectorAll(".elemento[data-numero]").forEach(el => el.classList.remove("atenuado"));
+    document.querySelectorAll(".elemento[data-fam]").forEach(el => el.classList.remove("atenuado"));
     return;
   }
   let n = 0;
@@ -213,6 +216,10 @@ function filtrar() {
     const ok = visible(e);
     el.classList.toggle("atenuado", !ok);
     if (ok) n++;
+  });
+  document.querySelectorAll(".elemento[data-fam]").forEach(h => {
+    const ok = datos.some(e => e.familia === h.dataset.fam && visible(e));
+    h.classList.toggle("atenuado", !ok);
   });
   actualizarContador(n);
 }
