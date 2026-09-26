@@ -111,7 +111,40 @@ main { padding: 1rem 1.5rem 2rem; }
 .detalle-lista .ancho { grid-column: 1 / -1; }
 .detalle-lista dt { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; }
 .detalle-lista dd { margin: 0.2rem 0 0; }
+.d-cur { margin-top: 0.35rem; }
+.d-wiki { display: inline-block; margin-top: 0.45rem; color: var(--acento); font-size: 0.9rem; }
 footer { padding: 1rem 1.5rem 2rem; color: var(--muted); }
+/* ===== MODO JUEGO ===== */
+.oculto { display: none !important; }
+.topbar-right { display: flex; align-items: center; gap: 1rem; }
+.switch { display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none; }
+.switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.switch input:focus-visible + .slider { outline: 2px solid var(--acento); outline-offset: 2px; }
+.slider { position: relative; width: 44px; height: 24px; border-radius: 999px; background: #475569; border: 1px solid #64748b; transition: background 0.2s; flex: none; }
+.slider::before { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+.switch input:checked + .slider { background: var(--acento); border-color: var(--acento); }
+.switch input:checked + .slider::before { transform: translateX(20px); }
+.switch-label { font-size: 0.9rem; font-weight: 600; }
+.game-bar { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; padding: 0.7rem 1.5rem; background: #0b2540; border-bottom: 1px solid #334155; }
+.game-bar button { background: var(--panel); color: var(--texto); border: 1px solid #475569; border-radius: 8px; padding: 0.5rem 0.8rem; cursor: pointer; }
+.game-bar button:hover { border-color: var(--acento); }
+.g-score { font-size: 0.9rem; background: var(--panel); border: 1px solid #334155; border-radius: 999px; padding: 0.25rem 0.7rem; }
+body.game-on .controls, body.game-on .leyenda { display: none; }
+.elemento.juego-oculto { background: var(--panel) !important; color: var(--muted) !important; border-style: dashed; }
+.elemento.juego-oculto .sim { font-size: 1.3rem; color: var(--texto); }
+.elemento.juego-oculto .nom { display: none; }
+.elemento.acertada { outline: 3px solid #22c55e; }
+.elemento.fallo { outline: 3px solid #ef4444; animation: shake 0.35s; }
+@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+.juego-zona { margin-top: 1rem; display: grid; gap: 0.6rem; }
+.juego-pista { margin: 0; color: var(--texto); background: #0f172a; border-radius: 10px; padding: 0.6rem; font-size: 0.9rem; }
+.juego-zona input { background: #0f172a; color: var(--texto); border: 1px solid #475569; border-radius: 8px; padding: 0.6rem 0.8rem; width: 100%; font-size: 1rem; }
+.juego-zona input:focus { outline: 2px solid var(--acento); border-color: var(--acento); }
+.juego-acciones { display: flex; gap: 0.5rem; }
+.juego-acciones button { background: var(--acento); color: #082f49; font-weight: 700; border: none; border-radius: 8px; padding: 0.6rem 1rem; cursor: pointer; }
+.juego-mensaje { margin: 0; min-height: 1.2em; font-size: 0.9rem; }
+.juego-mensaje.ok { color: #22c55e; }
+.juego-mensaje.ko { color: #ef4444; }
 @media (max-width: 900px) {
   .tabla { grid-template-columns: repeat(18, 56px); }
   .fila-elementos { grid-template-columns: repeat(15, 56px); overflow-x: auto; }
@@ -126,12 +159,19 @@ footer { padding: 1rem 1.5rem 2rem; color: var(--muted); }
       <h1 data-i18n="title">Tabla Periódica Interactiva</h1>
       <p class="subtitle" data-i18n="subtitle">Pulsa cualquier elemento para ver sus propiedades</p>
     </div>
-    <div class="lang-wrap">
-      <label for="lang">🌐</label>
-      <select id="lang" aria-label="Idioma / Language">
-        <option value="es">Español</option>
-        <option value="en">English</option>
-      </select>
+    <div class="topbar-right">
+      <label class="switch">
+        <input type="checkbox" id="modoJuego" aria-label="Modo juego / Game mode" />
+        <span class="slider" aria-hidden="true"></span>
+        <span class="switch-label" data-i18n="game">🎮 Juego</span>
+      </label>
+      <div class="lang-wrap">
+        <label for="lang">🌐</label>
+        <select id="lang" aria-label="Idioma / Language">
+          <option value="es">Español</option>
+          <option value="en">English</option>
+        </select>
+      </div>
     </div>
   </header>
 
@@ -141,6 +181,14 @@ footer { padding: 1rem 1.5rem 2rem; color: var(--muted); }
     <select id="filtroEstado" aria-label="Estado"></select>
     <button id="limpiar" data-i18n="clear">Limpiar</button>
     <span id="contador" class="contador"></span>
+  </section>
+
+  <section id="gameBar" class="game-bar oculto" aria-live="polite">
+    <span id="gScore" class="g-score"></span>
+    <span id="gIntentos" class="g-score"></span>
+    <span id="gPrecision" class="g-score"></span>
+    <button id="reiniciarJuego" data-i18n="restart">Reiniciar</button>
+    <button id="revelarTodo" data-i18n="giveUp">Rendirse</button>
   </section>
 
   <section class="leyenda" id="leyenda"></section>
@@ -164,13 +212,20 @@ footer { padding: 1rem 1.5rem 2rem; color: var(--muted); }
           <p id="dFamilia" class="d-fam">No metal</p>
         </div>
       </div>
-      <dl class="detalle-lista">
+      <dl class="detalle-lista" id="detalleLista">
         <div><dt data-i18n="masa">Masa atómica</dt><dd id="dMasa"></dd></div>
         <div><dt data-i18n="estado">Estado</dt><dd id="dEstado"></dd></div>
         <div><dt data-i18n="grupo">Grupo / Periodo</dt><dd id="dGrupo"></dd></div>
-        <div class="ancho"><dt data-i18n="uso">Usos</dt><dd id="dUso"></dd></div>
-        <div class="ancho"><dt>💡</dt><dd id="dCur"></dd></div>
+        <div class="ancho"><dt>💡 <span data-i18n="uso">Usos y curiosidades</span></dt><dd id="dUso"></dd><dd id="dCur" class="d-cur"></dd><a id="dWiki" class="d-wiki" target="_blank" rel="noopener">Wikipedia ↗</a></div>
       </dl>
+      <div id="juegoZona" class="juego-zona oculto">
+        <p id="juegoPista" class="juego-pista"></p>
+        <input id="adivinanza" type="text" data-i18n-ph="guessPh" placeholder="Escribe símbolo o nombre…" autocomplete="off" />
+        <div class="juego-acciones">
+          <button id="comprobar" data-i18n="check">Comprobar</button>
+        </div>
+        <p id="mensajeJuego" class="juego-mensaje" aria-live="polite"></p>
+      </div>
     </div>
   </div>
 
@@ -2069,7 +2124,6 @@ const DATOS_EMBEBIDOS = [
     "curiosidad_en": "The heaviest known element"
   }
 ];
-
 const TEXTOS = {
   es: {
     title: "Tabla Periódica Interactiva",
@@ -2079,11 +2133,26 @@ const TEXTOS = {
     todasFam: "Todas las familias",
     todosEst: "Todos los estados",
     masa: "Masa atómica", estado: "Estado", grupo: "Grupo / Periodo",
-    uso: "Usos",
+    uso: "Usos y curiosidades",
+    wiki: "Ver en Wikipedia",
     footer: "118 elementos · Datos educativos · Abre con un servidor local: python3 -m http.server",
     contador: n => `${n} elementos`,
     familias: {"no-metal":"No metal","gas-noble":"Gas noble","metal-alcalino":"Metal alcalino","alcalinoterreo":"Alcalinotérreo","metaloide":"Metaloide","halogeno":"Halógeno","metal-transicion":"Metal de transición","metal-postransicion":"Metal postransición","lantanido":"Lantánido","actinido":"Actínido"},
-    estados: {solido:"Sólido",liquido:"Líquido",gas:"Gas",desconocido:"Desconocido"}
+    estados: {solido:"Sólido",liquido:"Líquido",gas:"Gas",desconocido:"Desconocido"},
+    game: "🎮 Juego",
+    restart: "Reiniciar juego",
+    giveUp: "Rendirse",
+    check: "Comprobar",
+    guessPh: "Escribe símbolo o nombre…",
+    scoreLabel: "Aciertos",
+    attemptsLabel: "Intentos",
+    accuracyLabel: "Precisión",
+    guessTitle: "¿Qué elemento es?",
+    correct: "¡Correcto! 🎉",
+    wrong: "Fallaste, inténtalo de nuevo ❌",
+    win: "¡Completado! 🎉 ¡Enhorabuena!",
+    revealed: "Tablero revelado",
+    pista: e => `#${e.numero} · ${TEXTOS.es.familias[e.familia]} · Grupo ${e.grupo}, Periodo ${e.periodo} · ${e.masa} u`
   },
   en: {
     title: "Interactive Periodic Table",
@@ -2093,16 +2162,35 @@ const TEXTOS = {
     todasFam: "All families",
     todosEst: "All states",
     masa: "Atomic mass", estado: "State", grupo: "Group / Period",
-    uso: "Uses",
+    uso: "Uses & facts",
+    wiki: "View on Wikipedia",
     footer: "118 elements · Educational data · Open with a local server: python3 -m http.server",
     contador: n => `${n} elements`,
     familias: {"no-metal":"Nonmetal","gas-noble":"Noble gas","metal-alcalino":"Alkali metal","alcalinoterreo":"Alkaline earth","metaloide":"Metalloid","halogeno":"Halogen","metal-transicion":"Transition metal","metal-postransicion":"Post-transition metal","lantanido":"Lanthanide","actinido":"Actinide"},
-    estados: {solido:"Solid",liquido:"Liquid",gas:"Gas",desconocido:"Unknown"}
+    estados: {solido:"Solid",liquido:"Liquid",gas:"Gas",desconocido:"Unknown"},
+    game: "🎮 Game",
+    restart: "Restart game",
+    giveUp: "Give up",
+    check: "Check",
+    guessPh: "Type symbol or name…",
+    scoreLabel: "Hits",
+    attemptsLabel: "Attempts",
+    accuracyLabel: "Accuracy",
+    guessTitle: "Which element is it?",
+    correct: "Correct! 🎉",
+    wrong: "Wrong, try again ❌",
+    win: "Completed! 🎉 Well done!",
+    revealed: "Board revealed",
+    pista: e => `#${e.numero} · ${TEXTOS.en.familias[e.familia]} · Group ${e.grupo}, Period ${e.periodo} · ${e.masa} u`
   }
 };
 
 let datos = [];
 let lang = localStorage.getItem("tp-lang") || "es";
+let gameMode = false;
+let acertados = new Set();
+let intentosJuego = 0;
+let elementoActual = null;
 const $ = id => document.getElementById(id);
 const T = () => TEXTOS[lang];
 const nombre = e => lang === "es" ? e.nombre_es : e.nombre_en;
@@ -2115,9 +2203,15 @@ function aplicarTextos() {
   });
   $("buscador").placeholder = T().search;
   $("lang").value = lang;
+  const dw = $("dWiki");
+  if (dw) dw.textContent = T().wiki + " ↗";
+  const adv = $("adivinanza");
+  if (adv) adv.placeholder = T().guessPh;
   construirFiltros();
   construirLeyenda();
   actualizarContador(datos.filter(visible).length);
+  actualizarScore();
+  if (elementoActual && gameMode) $("juegoPista").textContent = T().pista(elementoActual);
 }
 
 function construirFiltros() {
@@ -2144,13 +2238,18 @@ function construirLeyenda() {
 
 function tarjeta(e) {
   const d = document.createElement("button");
-  d.className = `elemento fam-${e.familia}`;
+  const adivinado = acertados.has(e.numero);
+  d.className = `elemento fam-${e.familia}` + (gameMode && !adivinado ? " juego-oculto" : "") + (gameMode && adivinado ? " acertada" : "");
   d.style.gridColumn = e.grupo;
   d.style.gridRow = e.periodo;
   d.setAttribute("role", "gridcell");
   d.tabIndex = 0;
   d.dataset.numero = e.numero;
-  d.innerHTML = `<span class="num">${e.numero}</span><span class="sim">${e.simbolo}</span><span class="nom">${nombre(e)}</span>`;
+  if (gameMode && !adivinado) {
+    d.innerHTML = `<span class="num">${e.numero}</span><span class="sim">?</span>`;
+  } else {
+    d.innerHTML = `<span class="num">${e.numero}</span><span class="sim">${e.simbolo}</span><span class="nom">${nombre(e)}</span>`;
+  }
   d.onclick = () => mostrar(e);
   d.onkeydown = ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); mostrar(e); } };
   return d;
@@ -2191,6 +2290,10 @@ function visible(e) {
 }
 
 function filtrar() {
+  if (gameMode) {
+    document.querySelectorAll(".elemento[data-numero]").forEach(el => el.classList.remove("atenuado"));
+    return;
+  }
   let n = 0;
   document.querySelectorAll(".elemento[data-numero]").forEach(el => {
     const e = datos.find(x => x.numero === +el.dataset.numero);
@@ -2204,7 +2307,9 @@ function filtrar() {
 function actualizarContador(n) { $("contador").textContent = T().contador(n); }
 
 function mostrar(e) {
-  document.querySelectorAll(".elemento.seleccionado").forEach(x => x.classList.remove("seleccionado"));
+  if (gameMode && !acertados.has(e.numero)) { mostrarPregunta(e); return; }
+  $("detalleLista").classList.remove("oculto");
+  $("juegoZona").classList.add("oculto");  document.querySelectorAll(".elemento.seleccionado").forEach(x => x.classList.remove("seleccionado"));
   document.querySelector(`.elemento[data-numero="${e.numero}"]`)?.classList.add("seleccionado");
   $("dSimbolo").textContent = e.simbolo;
   $("dSimbolo").className = `d-simbolo fam-${e.familia}`;
@@ -2215,8 +2320,123 @@ function mostrar(e) {
   $("dEstado").textContent = T().estados[e.estado];
   $("dGrupo").textContent = lang === "es" ? `Grupo ${e.grupo}, Periodo ${e.periodo}` : `Group ${e.grupo}, Period ${e.periodo}`;
   $("dUso").textContent = lang === "es" ? e.uso_es : e.uso_en;
-  $("dCur").textContent = "💡 " + (lang === "es" ? e.curiosidad_es : e.curiosidad_en);
+  $("dCur").textContent = lang === "es" ? e.curiosidad_es : e.curiosidad_en;
+  const wiki = $("dWiki");
+  if (wiki) {
+    const wname = lang === "es" ? e.nombre_es : e.nombre_en;
+    const base = lang === "es" ? "https://es.wikipedia.org/wiki/" : "https://en.wikipedia.org/wiki/";
+    wiki.href = base + encodeURIComponent(wname);
+    wiki.textContent = T().wiki + " ↗";
+  }
   $("modal").classList.remove("oculto");
+}
+
+function normaliza(s) {
+  return (s || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function totalElementos() { return datos.length || 118; }
+
+function actualizarScore() {
+  const total = totalElementos();
+  const ok = acertados.size;
+  const prec = intentosJuego > 0 ? Math.round((ok / intentosJuego) * 100) : 0;
+  if ($("gScore")) $("gScore").textContent = `${T().scoreLabel}: ${ok} / ${total}`;
+  if ($("gIntentos")) $("gIntentos").textContent = `${T().attemptsLabel}: ${intentosJuego}`;
+  if ($("gPrecision")) $("gPrecision").textContent = `${T().accuracyLabel}: ${prec} %`;
+}
+
+function iniciarJuego() {
+  gameMode = true;
+  document.body.classList.add("game-on");
+  $("gameBar").classList.remove("oculto");
+  $("modal").classList.add("oculto");
+  elementoActual = null;
+  render();
+  actualizarScore();
+}
+
+function salirJuego() {
+  gameMode = false;
+  document.body.classList.remove("game-on");
+  $("gameBar").classList.add("oculto");
+  $("modal").classList.add("oculto");
+  elementoActual = null;
+  render();
+}
+
+function reiniciarJuego() {
+  acertados = new Set();
+  intentosJuego = 0;
+  elementoActual = null;
+  $("modal").classList.add("oculto");
+  render();
+  actualizarScore();
+}
+
+function revelarTodo() {
+  datos.forEach(e => acertados.add(e.numero));
+  elementoActual = null;
+  $("modal").classList.add("oculto");
+  render();
+  actualizarScore();
+}
+
+function revelarCasilla(numero) {
+  const el = document.querySelector(`.elemento[data-numero="${numero}"]`);
+  const e = datos.find(x => x.numero === numero);
+  if (!el || !e) return;
+  el.classList.remove("juego-oculto");
+  el.classList.add("acertada");
+  el.innerHTML = `<span class="num">${e.numero}</span><span class="sim">${e.simbolo}</span><span class="nom">${nombre(e)}</span>`;
+}
+
+function mostrarPregunta(e) {
+  elementoActual = e;
+  document.querySelectorAll(".elemento.seleccionado").forEach(x => x.classList.remove("seleccionado"));
+  document.querySelector(`.elemento[data-numero="${e.numero}"]`)?.classList.add("seleccionado");
+  $("dSimbolo").textContent = "?";
+  $("dSimbolo").className = "d-simbolo";
+  $("dNumero").textContent = "#" + e.numero;
+  $("dNombre").textContent = T().guessTitle;
+  $("dFamilia").textContent = "";
+  $("detalleLista").classList.add("oculto");
+  $("juegoZona").classList.remove("oculto");
+  $("juegoPista").textContent = T().pista(e);
+  $("adivinanza").value = "";
+  const m = $("mensajeJuego");
+  m.textContent = "";
+  m.className = "juego-mensaje";
+  $("modal").classList.remove("oculto");
+  setTimeout(() => $("adivinanza").focus(), 50);
+}
+
+function comprobarIntento() {
+  if (!elementoActual || !gameMode) return;
+  const val = normaliza($("adivinanza").value);
+  if (!val) return;
+  const e = elementoActual;
+  const ok = val === normaliza(e.simbolo) || val === normaliza(e.nombre_es) || val === normaliza(e.nombre_en);
+  intentosJuego++;
+  const m = $("mensajeJuego");
+  const el = document.querySelector(`.elemento[data-numero="${e.numero}"]`);
+  if (ok) {
+    acertados.add(e.numero);
+    revelarCasilla(e.numero);
+    m.textContent = T().correct + (acertados.size === totalElementos() ? " " + T().win : "");
+    m.className = "juego-mensaje ok";
+    actualizarScore();
+    elementoActual = null;
+    setTimeout(() => { if (!elementoActual) $("modal").classList.add("oculto"); }, 900);
+  } else {
+    m.textContent = T().wrong;
+    m.className = "juego-mensaje ko";
+    if (el) {
+      el.classList.add("fallo");
+      setTimeout(() => el.classList.remove("fallo"), 600);
+    }
+    actualizarScore();
+  }
 }
 
 function init() {
@@ -2226,11 +2446,15 @@ function init() {
   $("filtroFamilia").onchange = filtrar;
   $("filtroEstado").onchange = filtrar;
   $("limpiar").onclick = () => { $("buscador").value = ""; $("filtroFamilia").value = ""; $("filtroEstado").value = ""; filtrar(); };
-  $("cerrar").onclick = () => $("modal").classList.add("oculto");
-  $("modal").addEventListener("click", e => { if (e.target.id === "modal") $("modal").classList.add("oculto"); });
-  document.addEventListener("keydown", e => { if (e.key === "Escape") $("modal").classList.add("oculto"); });
+  $("cerrar").onclick = () => { $("modal").classList.add("oculto"); elementoActual = null; };
+  $("modal").addEventListener("click", e => { if (e.target.id === "modal") { $("modal").classList.add("oculto"); elementoActual = null; } });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { $("modal").classList.add("oculto"); elementoActual = null; } });
+  $("modoJuego").onchange = e => { e.target.checked ? iniciarJuego() : salirJuego(); };
+  $("reiniciarJuego").onclick = reiniciarJuego;
+  $("revelarTodo").onclick = revelarTodo;
+  $("comprobar").onclick = comprobarIntento;
+  $("adivinanza").addEventListener("keydown", e => { if (e.key === "Enter") comprobarIntento(); });
 
-  // Datos embebidos para funcionar con file:// sin servidor
   datos = DATOS_EMBEBIDOS;
   aplicarTextos();
   render();

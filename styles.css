@@ -104,6 +104,8 @@ main { padding: 1rem 1.5rem 2rem; }
 .detalle-lista .ancho { grid-column: 1 / -1; }
 .detalle-lista dt { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; }
 .detalle-lista dd { margin: 0.2rem 0 0; }
+.d-cur { margin-top: 0.35rem; }
+.d-wiki { display: inline-block; margin-top: 0.45rem; color: var(--acento); font-size: 0.9rem; }
 footer { padding: 1rem 1.5rem 2rem; color: var(--muted); }
 /* ===== MODO JUEGO ===== */
 .oculto { display: none !important; }

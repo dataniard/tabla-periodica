@@ -7,7 +7,8 @@ const TEXTOS = {
     todasFam: "Todas las familias",
     todosEst: "Todos los estados",
     masa: "Masa atómica", estado: "Estado", grupo: "Grupo / Periodo",
-    uso: "Usos",
+    uso: "Usos y curiosidades",
+    wiki: "Ver en Wikipedia",
     footer: "118 elementos · Datos educativos · Abre con un servidor local: python3 -m http.server",
     contador: n => `${n} elementos`,
     familias: {"no-metal":"No metal","gas-noble":"Gas noble","metal-alcalino":"Metal alcalino","alcalinoterreo":"Alcalinotérreo","metaloide":"Metaloide","halogeno":"Halógeno","metal-transicion":"Metal de transición","metal-postransicion":"Metal postransición","lantanido":"Lantánido","actinido":"Actínido"},
@@ -35,7 +36,8 @@ const TEXTOS = {
     todasFam: "All families",
     todosEst: "All states",
     masa: "Atomic mass", estado: "State", grupo: "Group / Period",
-    uso: "Uses",
+    uso: "Uses & facts",
+    wiki: "View on Wikipedia",
     footer: "118 elements · Educational data · Open with a local server: python3 -m http.server",
     contador: n => `${n} elements`,
     familias: {"no-metal":"Nonmetal","gas-noble":"Noble gas","metal-alcalino":"Alkali metal","alcalinoterreo":"Alkaline earth","metaloide":"Metalloid","halogeno":"Halogen","metal-transicion":"Transition metal","metal-postransicion":"Post-transition metal","lantanido":"Lanthanide","actinido":"Actinide"},
@@ -75,6 +77,8 @@ function aplicarTextos() {
   });
   $("buscador").placeholder = T().search;
   $("lang").value = lang;
+  const dw = $("dWiki");
+  if (dw) dw.textContent = T().wiki + " ↗";
   const adv = $("adivinanza");
   if (adv) adv.placeholder = T().guessPh;
   construirFiltros();
@@ -190,7 +194,14 @@ function mostrar(e) {
   $("dEstado").textContent = T().estados[e.estado];
   $("dGrupo").textContent = lang === "es" ? `Grupo ${e.grupo}, Periodo ${e.periodo}` : `Group ${e.grupo}, Period ${e.periodo}`;
   $("dUso").textContent = lang === "es" ? e.uso_es : e.uso_en;
-  $("dCur").textContent = "💡 " + (lang === "es" ? e.curiosidad_es : e.curiosidad_en);
+  $("dCur").textContent = lang === "es" ? e.curiosidad_es : e.curiosidad_en;
+  const wiki = $("dWiki");
+  if (wiki) {
+    const wname = lang === "es" ? e.nombre_es : e.nombre_en;
+    const base = lang === "es" ? "https://es.wikipedia.org/wiki/" : "https://en.wikipedia.org/wiki/";
+    wiki.href = base + encodeURIComponent(wname);
+    wiki.textContent = T().wiki + " ↗";
+  }
   $("modal").classList.remove("oculto");
 }
 
