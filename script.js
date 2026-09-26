@@ -85,7 +85,7 @@ const TEXTOS = {
 
 let datos = [];
 let lang = localStorage.getItem("tp-lang") || "es";
-let theme = localStorage.getItem("tp-theme") || "dark";
+let theme = localStorage.getItem("tp-theme") || "light";
 let gameMode = false;
 let acertados = new Set();
 let intentosJuego = 0;
