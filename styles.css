@@ -34,6 +34,8 @@ body {
   border: 1px solid #475569; border-radius: 8px; padding: 0.5rem 0.7rem;
 }
 .controls { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 1rem 1.5rem; align-items: center; }
+.controls .buscador { flex: 0 1 230px; min-width: 150px; }
+.filtros-estado { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .controls input { flex: 1; min-width: 200px; }
 .controls button { cursor: pointer; }
 .controls button:hover { border-color: var(--acento); }

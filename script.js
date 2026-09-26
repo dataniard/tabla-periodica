@@ -87,6 +87,8 @@ let datos = [];
 let lang = localStorage.getItem("tp-lang") || "es";
 let theme = localStorage.getItem("tp-theme") || "light";
 let gameMode = false;
+let famSel = "";
+let estSel = "";
 let acertados = new Set();
 let intentosJuego = 0;
 let elementoActual = null;
@@ -120,22 +122,30 @@ function aplicarTextos() {
 }
 
 function construirFiltros() {
-  const fc = $("filtroFamilia"), fe = $("filtroEstado");
-  const vc = fc.value || "", ve = fe.value || "";
-  fc.innerHTML = `<option value="">${T().todasFam}</option>` +
-    Object.entries(T().familias).map(([k,v]) => `<option value="${k}">${v}</option>`).join("");
-  fe.innerHTML = `<option value="">${T().todosEst}</option>` +
-    Object.entries(T().estados).map(([k,v]) => `<option value="${k}">${v}</option>`).join("");
-  if ([...fc.options].some(o => o.value === vc)) fc.value = vc;
-  if ([...fe.options].some(o => o.value === ve)) fe.value = ve;
+  $("filtrosEstado").innerHTML = Object.entries(T().estados).map(([k,v]) => {
+    const n = datos.filter(e => e.estado === k).length;
+    const act = estSel === k ? " activo" : "";
+    return `<button class="chip${act}" data-est="${k}">${v} (${n})</button>`;
+  }).join("");
+  document.querySelectorAll("#filtrosEstado .chip").forEach(ch => {
+    ch.onclick = () => {
+      estSel = estSel === ch.dataset.est ? "" : ch.dataset.est;
+      construirFiltros();
+      filtrar();
+    };
+  });
 }
 
 function construirLeyenda() {
-  $("leyenda").innerHTML = Object.entries(T().familias).map(([k,v]) =>
-    `<button class="chip fam-${k.replace(/-/g,"-")}" data-fam="${k}">${v}</button>`).join("");
+  $("leyenda").innerHTML = Object.entries(T().familias).map(([k,v]) => {
+    const n = datos.filter(e => e.familia === k).length;
+    const act = famSel === k ? " activo" : "";
+    return `<button class="chip fam-${k} ${act}" data-fam="${k}">${v} (${n})</button>`;
+  }).join("");
   document.querySelectorAll("#leyenda .chip").forEach(ch => {
     ch.onclick = () => {
-      $("filtroFamilia").value = $("filtroFamilia").value === ch.dataset.fam ? "" : ch.dataset.fam;
+      famSel = famSel === ch.dataset.fam ? "" : ch.dataset.fam;
+      construirLeyenda();
       filtrar();
     };
   });
@@ -196,7 +206,7 @@ function render() {
 
 function visible(e) {
   const q = $("buscador").value.trim().toLowerCase();
-  const c = $("filtroFamilia").value, s = $("filtroEstado").value;
+  const c = famSel, s = estSel;
   if (c && e.familia !== c) return false;
   if (s && e.estado !== s) return false;
   if (q && !(e.nombre_es.toLowerCase().includes(q) || e.nombre_en.toLowerCase().includes(q) ||
@@ -396,9 +406,7 @@ function init() {
   $("lang").value = lang;
   $("lang").onchange = e => { lang = e.target.value; localStorage.setItem("tp-lang", lang); aplicarTextos(); render(); };
   $("buscador").oninput = filtrar;
-  $("filtroFamilia").onchange = filtrar;
-  $("filtroEstado").onchange = filtrar;
-  $("limpiar").onclick = () => { $("buscador").value = ""; $("filtroFamilia").value = ""; $("filtroEstado").value = ""; filtrar(); };
+  $("limpiar").onclick = () => { $("buscador").value = ""; famSel = ""; estSel = ""; construirLeyenda(); construirFiltros(); filtrar(); };
   $("cerrar").onclick = () => { $("modal").classList.add("oculto"); elementoActual = null; };
   $("modal").addEventListener("click", e => { if (e.target.id === "modal") { $("modal").classList.add("oculto"); elementoActual = null; } });
   document.addEventListener("keydown", e => { if (e.key === "Escape") { $("modal").classList.add("oculto"); elementoActual = null; } });
