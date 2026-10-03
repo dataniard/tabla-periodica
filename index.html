@@ -3,96 +3,274 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-i18n="title">Tabla Periódica Interactiva</title>
+  <title data-i18n="title">Tabla Periódica Interactiva · Explorador Químico</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <!-- Canvas para fuegos artificiales / confeti en modo juego -->
+  <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
+
+  <!-- Barra superior / Header -->
   <header class="topbar">
     <div class="brand">
-      <h1 data-i18n="title">Tabla Periódica Interactiva</h1>
-      <p class="subtitle" data-i18n="subtitle">Pulsa cualquier elemento para ver sus propiedades</p>
+      <div class="brand-logo" aria-hidden="true">
+        <svg viewBox="0 0 32 32" class="atom-icon">
+          <ellipse cx="16" cy="16" rx="14" ry="5.5" transform="rotate(0 16 16)" />
+          <ellipse cx="16" cy="16" rx="14" ry="5.5" transform="rotate(60 16 16)" />
+          <ellipse cx="16" cy="16" rx="14" ry="5.5" transform="rotate(120 16 16)" />
+          <circle cx="16" cy="16" r="3.2" class="atom-core" />
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title-wrap">
+          <h1 data-i18n="title">Tabla Periódica</h1>
+          <span class="version-badge">118 IUPAC</span>
+        </div>
+        <p class="subtitle" data-i18n="subtitle">Explorador interactivo de los 118 elementos químicos</p>
+      </div>
     </div>
-    <div class="topbar-right">
-      <label class="switch">
+
+    <div class="topbar-actions">
+      <!-- Botón Elemento Aleatorio -->
+      <button id="btnAleatorio" class="btn-icon-label" title="Descubrir un elemento al azar (Atajo: R)" data-i18n-title="randomTitle">
+        <span class="icon">🎲</span>
+        <span class="btn-text" data-i18n="randomBtn">Aleatorio</span>
+      </button>
+
+      <!-- Selector de Modo de Color -->
+      <div class="color-mode-select-wrap">
+        <label for="colorMode" class="sr-only" data-i18n="colorModeLabel">Modo de color</label>
+        <span class="color-mode-icon" aria-hidden="true">🎨</span>
+        <select id="colorMode" aria-label="Modo de color / Color mode">
+          <option value="familia" data-i18n="optFamilia">Familia química</option>
+          <option value="bloque" data-i18n="optBloque">Bloque (s, p, d, f)</option>
+          <option value="estado" data-i18n="optEstado">Estado de agregación</option>
+        </select>
+      </div>
+
+      <!-- Conmutador Sonido -->
+      <button id="btnSonido" class="btn-icon-only" aria-label="Activar o desactivar sonido" title="Sonido: Desactivado">
+        <span id="iconoSonido">🔇</span>
+      </button>
+
+      <!-- Conmutador Tema Claro / Oscuro -->
+      <button id="btnTema" class="btn-icon-only" aria-label="Cambiar tema claro / oscuro" title="Cambiar tema">
+        <span id="iconoTema">🌙</span>
+      </button>
+
+      <!-- Switch Modo Juego -->
+      <label class="switch" title="Activar modo juego / Desafío">
         <input type="checkbox" id="modoJuego" aria-label="Modo juego / Game mode" />
         <span class="slider" aria-hidden="true"></span>
-        <span class="switch-label" data-i18n="game">🎮 Juego</span>
+        <span class="switch-label" data-i18n="game">🎮 Quiz</span>
       </label>
+
+      <!-- Selector de Idioma -->
       <div class="lang-wrap">
-        <label for="lang">🌐</label>
+        <label for="lang" class="sr-only">Idioma / Language</label>
+        <span aria-hidden="true">🌐</span>
         <select id="lang" aria-label="Idioma / Language">
-          <option value="es">Español</option>
-          <option value="en">English</option>
+          <option value="es">ES</option>
+          <option value="en">EN</option>
         </select>
       </div>
     </div>
   </header>
 
-  <section class="controls">
-    <input id="buscador" class="buscador" type="search" data-i18n-ph="search" placeholder="Buscar por nombre, símbolo o número…" autocomplete="off" />
-    <div id="filtrosEstado" class="filtros-estado"></div>
-    <button id="limpiar" data-i18n="clear">Limpiar</button>
-    <span id="contador" class="contador"></span>
-  </section>
-
-  <section id="gameBar" class="game-bar oculto" aria-live="polite">
-    <span id="gScore" class="g-score"></span>
-    <span id="gIntentos" class="g-score"></span>
-    <span id="gPrecision" class="g-score"></span>
-    <button id="reiniciarJuego" data-i18n="restart">Reiniciar</button>
-    <button id="revelarTodo" data-i18n="giveUp">Rendirse</button>
-  </section>
-
-  <section class="leyenda" id="leyenda"></section>
-
-  <main>
-    <div id="tabla" class="tabla" role="grid" aria-label="Tabla periódica"></div>
-    <div class="bloque-f">
-      <div class="fila-f"><span class="etiqueta-f">57–71</span><div id="lantanidos" class="fila-elementos"></div></div>
-      <div class="fila-f"><span class="etiqueta-f">89–103</span><div id="actinidos" class="fila-elementos"></div></div>
+  <!-- Barra de Filtros y Búsqueda -->
+  <section class="controls" aria-label="Filtros y buscador">
+    <div class="buscador-wrap">
+      <span class="buscador-icon" aria-hidden="true">🔍</span>
+      <input id="buscador" class="buscador" type="search" data-i18n-ph="search" placeholder="Buscar por nombre, símbolo, número o masa… (/)" autocomplete="off" />
+      <kbd class="kbd-shortcut" title="Pulsa / para buscar">/</kbd>
     </div>
-    <div class="theme-row">
-      <label class="switch">
-        <input type="checkbox" id="temaClaro" aria-label="Tema claro / Light theme" />
-        <span class="slider" aria-hidden="true"></span>
-        <span class="switch-label" data-i18n="theme">☀️ Claro</span>
-      </label>
+
+    <!-- Filtros rápidos por estado de agregación -->
+    <div id="filtrosEstado" class="filtros-estado" role="toolbar" aria-label="Filtrar por estado"></div>
+
+    <div class="controls-right">
+      <button id="limpiar" class="btn-limpiar" data-i18n="clear" title="Restablecer todos los filtros">
+        <span class="icon">↺</span>
+        <span data-i18n="clear">Limpiar</span>
+      </button>
+      <span id="contador" class="contador" aria-live="polite"></span>
+    </div>
+  </section>
+
+  <!-- Barra de estado del Modo Juego -->
+  <section id="gameBar" class="game-bar oculto" aria-live="polite">
+    <div class="game-stats">
+      <div class="stat-pill"><span class="stat-icon">🎯</span><span id="gScore" class="stat-val">0 / 118</span></div>
+      <div class="stat-pill"><span class="stat-icon">⚡</span><span id="gIntentos" class="stat-val">0</span></div>
+      <div class="stat-pill"><span class="stat-icon">📈</span><span id="gPrecision" class="stat-val">100%</span></div>
+      <div class="stat-pill"><span class="stat-icon">🔥</span><span id="gRacha" class="stat-val">0</span></div>
+    </div>
+    <div class="game-progress-wrap">
+      <div id="gameProgressFill" class="game-progress-fill" style="width: 0%"></div>
+    </div>
+    <div class="game-actions">
+      <button id="btnPista" class="btn-game-hint" data-i18n="hint">💡 Pista</button>
+      <button id="reiniciarJuego" class="btn-game-sec" data-i18n="restart">Reiniciar</button>
+      <button id="revelarTodo" class="btn-game-giveup" data-i18n="giveUp">Rendirse</button>
+    </div>
+  </section>
+
+  <!-- Leyenda Interactiva (familias químicas o bloques) -->
+  <section class="leyenda-section" aria-label="Leyenda de colores">
+    <div class="leyenda" id="leyenda" role="toolbar" aria-label="Filtro por familias o bloques"></div>
+  </section>
+
+  <!-- Área Principal de la Tabla Periódica -->
+  <main class="tabla-main">
+    <div class="tabla-scroll-wrap" id="tablaScrollWrap">
+      <!-- Grid de la tabla (18 columnas + cabeceras de grupos y periodos) -->
+      <div id="tabla" class="tabla" role="grid" aria-label="Tabla periódica de los elementos"></div>
+
+      <!-- Conector decorativo entre tabla y bloque f -->
+      <div class="conector-f" aria-hidden="true">
+        <span class="conector-linea"></span>
+        <span class="conector-tag" data-i18n="bloqueFTag">Tierras raras y actínidos (Bloque f)</span>
+        <span class="conector-linea"></span>
+      </div>
+
+      <!-- Bloque f: Lantánidos y Actínidos -->
+      <div class="bloque-f" role="region" aria-label="Bloque f: Lantánidos y Actínidos">
+        <div class="fila-f">
+          <div class="etiqueta-f" title="Lantánidos (57 al 71)">
+            <span class="f-num">57–71</span>
+            <span class="f-name" data-i18n="lanShort">Lantánidos</span>
+          </div>
+          <div id="lantanidos" class="fila-elementos"></div>
+        </div>
+        <div class="fila-f">
+          <div class="etiqueta-f" title="Actínidos (89 al 103)">
+            <span class="f-num">89–103</span>
+            <span class="f-name" data-i18n="actShort">Actínidos</span>
+          </div>
+          <div id="actinidos" class="fila-elementos"></div>
+        </div>
+      </div>
     </div>
   </main>
 
-  <div id="modal" class="modal oculto" role="dialog" aria-modal="true">
-    <div class="tarjeta-detalle">
-      <button id="cerrar" class="cerrar" aria-label="Cerrar">✕</button>
-      <div class="detalle-head">
-        <div id="dSimbolo" class="d-simbolo">H</div>
-        <div>
-          <div id="dNumero" class="d-numero">1</div>
-          <h2 id="dNombre">Hidrógeno</h2>
-          <p id="dFamilia" class="d-fam">No metal</p>
+  <!-- Modal Detallado de Elemento / Pregunta de Quiz -->
+  <div id="modal" class="modal oculto" role="dialog" aria-modal="true" aria-labelledby="dNombre">
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <div class="tarjeta-detalle" role="document">
+      <!-- Barra superior del modal con navegación rápida -->
+      <div class="modal-top-nav">
+        <div class="modal-nav-left">
+          <span id="dCategoriaTag" class="cat-badge">No metal</span>
+          <span id="dBloqueTag" class="block-badge">Bloque s</span>
+        </div>
+        <div class="modal-nav-center">
+          <button id="btnPrevElem" class="btn-nav-elem" title="Elemento anterior (←)" aria-label="Elemento anterior">‹</button>
+          <span id="dNavIndex" class="nav-elem-index">#1 / 118</span>
+          <button id="btnNextElem" class="btn-nav-elem" title="Siguiente elemento (→)" aria-label="Siguiente elemento">›</button>
+        </div>
+        <button id="cerrar" class="cerrar" aria-label="Cerrar ventana">✕</button>
+      </div>
+
+      <!-- Cabecera principal: tarjeta de símbolo + átomo de Bohr interactivo -->
+      <div class="detalle-hero">
+        <div class="d-simbolo-box" id="dSimboloBox">
+          <div class="d-simbolo-top">
+            <span id="dNumero" class="d-numero">1</span>
+            <span id="dMasaPill" class="d-masa-pill">1.008 u</span>
+          </div>
+          <div id="dSimbolo" class="d-simbolo">H</div>
+          <div id="dNombre" class="d-nombre">Hidrógeno</div>
+          <div id="dNombreEn" class="d-nombre-en">Hydrogen</div>
+        </div>
+
+        <!-- Visualizador interactivo de orbitales / Modelo atómico de Bohr -->
+        <div class="bohr-container" id="bohrContainer">
+          <div class="bohr-header">
+            <span class="bohr-title" data-i18n="bohrModel">Modelo Atómico de Bohr</span>
+            <span id="bohrTotalElec" class="bohr-badge">1 e⁻</span>
+          </div>
+          <div id="bohrCanvasWrap" class="bohr-canvas-wrap"></div>
+          <div id="bohrShellsBreakdown" class="bohr-shells-breakdown">K: 1</div>
         </div>
       </div>
+
+      <!-- Lista de Propiedades Físico-Químicas -->
       <dl class="detalle-lista" id="detalleLista">
-        <div><dt data-i18n="masa">Masa atómica</dt><dd id="dMasa"></dd></div>
-        <div><dt data-i18n="estado">Estado</dt><dd id="dEstado"></dd></div>
-        <div><dt data-i18n="grupo">Grupo / Periodo</dt><dd id="dGrupo"></dd></div>
-        <div class="ancho"><dt>💡 <span data-i18n="uso">Usos y curiosidades</span></dt><dd id="dUso"></dd><dd id="dCur" class="d-cur"></dd><a id="dWiki" class="d-wiki" target="_blank" rel="noopener">Wikipedia ↗</a></div>
-      </dl>
-      <div id="juegoZona" class="juego-zona oculto">
-        <p id="juegoPista" class="juego-pista"></p>
-        <input id="adivinanza" type="text" data-i18n-ph="guessPh" placeholder="Escribe símbolo o nombre…" autocomplete="off" />
-        <div class="juego-acciones">
-          <button id="comprobar" data-i18n="check">Comprobar</button>
+        <div class="prop-card">
+          <dt><span class="prop-icon">⚖️</span> <span data-i18n="masa">Masa atómica</span></dt>
+          <dd id="dMasa">1.008 u</dd>
         </div>
-        <p id="mensajeJuego" class="juego-mensaje" aria-live="polite"></p>
+        <div class="prop-card">
+          <dt><span class="prop-icon">🌡️</span> <span data-i18n="estado">Estado a 20°C</span></dt>
+          <dd id="dEstado">Gas</dd>
+        </div>
+        <div class="prop-card">
+          <dt><span class="prop-icon">📍</span> <span data-i18n="grupo">Grupo / Periodo</span></dt>
+          <dd id="dGrupo">Grupo 1, Periodo 1</dd>
+        </div>
+        <div class="prop-card">
+          <dt><span class="prop-icon">⚡</span> <span data-i18n="configuracion">Configuración</span></dt>
+          <dd id="dConfig" class="code-val">1s¹</dd>
+        </div>
+
+        <!-- Usos cotidianos e industriales -->
+        <div class="prop-card ancho prop-uso">
+          <dt><span class="prop-icon">🚀</span> <span data-i18n="uso">Usos y aplicaciones</span></dt>
+          <dd id="dUso"></dd>
+        </div>
+
+        <!-- Curiosidad o dato científico -->
+        <div class="prop-card ancho prop-cur">
+          <dt><span class="prop-icon">💡</span> <span data-i18n="curiosidad">Curiosidad científica</span></dt>
+          <dd id="dCur"></dd>
+        </div>
+      </dl>
+
+      <!-- Pie del modal con acciones -->
+      <div class="modal-footer" id="modalFooter">
+        <button id="btnCopiarFicha" class="btn-modal-action" title="Copiar ficha informativa al portapapeles">
+          <span class="icon">📋</span>
+          <span data-i18n="copyInfo">Copiar ficha</span>
+        </button>
+        <a id="dWiki" class="btn-modal-wiki" target="_blank" rel="noopener">
+          <span>Wikipedia</span>
+          <span class="wiki-arrow">↗</span>
+        </a>
       </div>
+
+      <!-- Zona de adivinanza (Modo Juego) -->
+      <div id="juegoZona" class="juego-zona oculto">
+        <div class="juego-card">
+          <p id="juegoPista" class="juego-pista"></p>
+          <div class="juego-input-wrap">
+            <input id="adivinanza" type="text" data-i18n-ph="guessPh" placeholder="Escribe símbolo o nombre del elemento…" autocomplete="off" />
+            <button id="comprobar" class="btn-comprobar" data-i18n="check">Comprobar</button>
+          </div>
+          <p id="mensajeJuego" class="juego-mensaje" aria-live="polite"></p>
+        </div>
+      </div>
+
+      <!-- Zona especial de grupos Lantánidos / Actínidos -->
       <div id="grupoZona" class="grupo-zona oculto">
-        <button id="verElementos" data-i18n="verElementos">Ver elementos ↓</button>
+        <button id="verElementos" class="btn-ver-bloque" data-i18n="verElementos">Explorar elementos en el Bloque f ↓</button>
       </div>
     </div>
   </div>
 
-  <footer>
-    <small data-i18n="footer">118 elementos · Datos educativos</small>
+  <!-- Toast flotante para notificaciones -->
+  <div id="toast" class="toast oculto" role="status" aria-live="polite"></div>
+
+  <!-- Pie de página elegante -->
+  <footer class="footer">
+    <div class="footer-content">
+      <p data-i18n="footer">118 elementos químicos · Datos y visualización interactiva educativa</p>
+      <div class="footer-meta">
+        <span>Atajos: <kbd>/</kbd> Buscar · <kbd>R</kbd> Aleatorio · <kbd>←</kbd> <kbd>→</kbd> Navegar · <kbd>Esc</kbd> Cerrar</span>
+      </div>
+    </div>
   </footer>
 
   <script src="script.js"></script>
