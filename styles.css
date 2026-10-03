@@ -685,6 +685,10 @@ body.game-on .leyenda-section {
   flex-direction: column;
 }
 
+.mobile-elements {
+  display: none;
+}
+
 .tabla-scroll-wrap {
   overflow-x: auto;
   padding-bottom: 1.5rem;
@@ -943,6 +947,12 @@ body.color-mode-estado .elemento {
   --tile-glow: var(--tile-color);
 }
 body.color-mode-estado .elemento .sim {
+  color: var(--tile-color);
+}
+
+body.color-mode-familia .mobile-element-card .mobile-card-symbol,
+body.color-mode-bloque .mobile-element-card .mobile-card-symbol,
+body.color-mode-estado .mobile-element-card .mobile-card-symbol {
   color: var(--tile-color);
 }
 
@@ -1661,5 +1671,201 @@ body.light .footer-meta kbd {
   }
   .detalle-lista {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .topbar {
+    position: static;
+  }
+
+  .brand {
+    width: 100%;
+  }
+
+  .topbar-actions,
+  .controls,
+  .leyenda,
+  .game-bar,
+  .game-actions {
+    width: 100%;
+  }
+
+  .topbar-actions,
+  .controls {
+    align-items: stretch;
+  }
+
+  .buscador-wrap,
+  .controls-right {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  .controls-right {
+    justify-content: space-between;
+    margin-left: 0;
+  }
+
+  .filtros-estado,
+  .leyenda {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+  }
+
+  .chip {
+    flex: 0 0 auto;
+  }
+
+  .mobile-elements {
+    display: block;
+    margin-bottom: 1rem;
+  }
+
+  .mobile-elements-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 0;
+  }
+
+  .mobile-elements-head h2 {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+
+  .mobile-elements-head p {
+    margin: 0.25rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+
+  .mobile-counter {
+    flex: 0 0 auto;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--accent);
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 999px;
+    padding: 0.3rem 0.65rem;
+    white-space: nowrap;
+  }
+
+  .mobile-elements-list {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .mobile-element-card {
+    width: 100%;
+    min-height: 66px;
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.85rem;
+    text-align: left;
+    border-radius: var(--radius-md);
+  }
+
+  .mobile-element-card:hover,
+  .mobile-element-card:focus-visible {
+    transform: translateY(-1px);
+  }
+
+  .mobile-card-symbol {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-subtle);
+    font-family: var(--font-mono);
+    font-size: 1.35rem;
+    font-weight: 800;
+  }
+
+  body.light .mobile-card-symbol {
+    background: rgba(15, 23, 42, 0.04);
+  }
+
+  .mobile-card-main {
+    min-width: 0;
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .mobile-card-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-main);
+    font-size: 0.95rem;
+    font-weight: 800;
+  }
+
+  .mobile-card-meta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .mobile-card-num {
+    font-family: var(--font-mono);
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  .tabla-scroll-wrap {
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 1rem;
+  }
+
+  .tabla-scroll-wrap::before {
+    content: "Tabla completa";
+    display: block;
+    margin-bottom: 0.65rem;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  html[lang="en"] .tabla-scroll-wrap::before {
+    content: "Full table";
+  }
+
+  .tarjeta-detalle {
+    width: min(100vw - 1rem, 760px);
+    max-height: calc(100vh - 1rem);
+    border-radius: var(--radius-lg);
+  }
+
+  .modal-top-nav,
+  .modal-footer,
+  .juego-input-wrap {
+    flex-wrap: wrap;
+  }
+
+  .modal-nav-center {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .footer-meta {
+    display: none;
   }
 }

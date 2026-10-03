@@ -32,6 +32,11 @@ Explorador científico y educativo de alta precisión de los 118 elementos quím
   - Enlace directo al artículo correspondiente en **Wikipedia** en español o inglés.
   - Tarjetas panorámicas para Lantánidos (57–71) y Actínidos (89–103).
 
+- **📱 Experiencia móvil optimizada**:
+  - Lista compacta táctil con símbolo, familia, estado, grupo y periodo de cada elemento.
+  - Búsqueda y filtros sincronizados con la tabla completa.
+  - Acceso rápido a la ficha modal sin perder la vista panorámica desplazable.
+
 - **🎮 Modo Quiz / Trivia con Gamificación**:
   - Adivina el elemento por símbolo, nombre o posición.
   - Estadísticas en tiempo real: aciertos, porcentaje de precisión, intentos y **🔥 contador de racha**.

@@ -14,6 +14,8 @@ const TEXTOS = {
     optFamilia: "Familia química",
     optBloque: "Bloque (s, p, d, f)",
     optEstado: "Estado de agregación",
+    mobileListTitle: "Exploración móvil",
+    mobileListHint: "Lista compacta optimizada para tocar, filtrar y abrir fichas rápidamente.",
     bloqueFTag: "Tierras raras y actínidos (Bloque f)",
     lanShort: "Lantánidos",
     actShort: "Actínidos",
@@ -88,6 +90,8 @@ const TEXTOS = {
     optFamilia: "Chemical family",
     optBloque: "Block (s, p, d, f)",
     optEstado: "State of matter",
+    mobileListTitle: "Mobile explorer",
+    mobileListHint: "Compact touch-friendly list for filtering and opening element cards quickly.",
     bloqueFTag: "Rare earths and actinides (f-Block)",
     lanShort: "Lanthanides",
     actShort: "Actinides",
@@ -180,6 +184,7 @@ let toastTimeout = null;
 const $ = id => document.getElementById(id);
 const T = () => TEXTOS[lang];
 const nombre = e => lang === "es" ? e.nombre_es : e.nombre_en;
+const desktopElementSelector = "#tabla .elemento[data-numero], #lantanidos .elemento[data-numero], #actinidos .elemento[data-numero]";
 
 /* ==========================================================================
    SINTETIZADOR DE SONIDO (Web Audio API nativo)
@@ -587,21 +592,21 @@ function construirLeyenda() {
 
 function resaltarFamilia(fam) {
   if (famSel || gameMode) return;
-  document.querySelectorAll(".elemento[data-numero]").forEach(el => {
+  document.querySelectorAll(desktopElementSelector).forEach(el => {
     el.classList.toggle("atenuado", el.dataset.familia !== fam);
   });
 }
 
 function resaltarBloque(bloque) {
   if (bloqueSel || gameMode) return;
-  document.querySelectorAll(".elemento[data-numero]").forEach(el => {
+  document.querySelectorAll(desktopElementSelector).forEach(el => {
     el.classList.toggle("atenuado", el.dataset.bloque !== bloque);
   });
 }
 
 function resaltarEstado(estado) {
   if (estSel || gameMode) return;
-  document.querySelectorAll(".elemento[data-numero]").forEach(el => {
+  document.querySelectorAll(desktopElementSelector).forEach(el => {
     el.classList.toggle("atenuado", el.dataset.estado !== estado);
   });
 }
@@ -676,6 +681,47 @@ function tarjeta(e) {
       AudioSynth.click();
       mostrar(e);
     }
+  };
+
+  return d;
+}
+
+function mobileCard(e) {
+  const d = document.createElement("button");
+  const adivinado = acertados.has(e.numero);
+  const oculto = gameMode && !adivinado;
+  d.className = `mobile-element-card elemento fam-${e.familia} bloque-${e.bloque} estado-${e.estado}` +
+    (oculto ? " juego-oculto" : "") +
+    (gameMode && adivinado ? " acertada" : "");
+  d.type = "button";
+  d.dataset.numero = e.numero;
+  d.dataset.familia = e.familia;
+  d.dataset.bloque = e.bloque;
+  d.dataset.estado = e.estado;
+  d.setAttribute("role", "listitem");
+  d.setAttribute("aria-label", `${nombre(e)}, ${e.simbolo}, #${e.numero}`);
+
+  const displaySymbol = oculto ? "?" : e.simbolo;
+  const displayName = oculto ? "···" : nombre(e);
+  const family = T().familias[e.familia] || e.familia;
+  const state = T().estados[e.estado] || e.estado;
+  const location = lang === "es"
+    ? `Grupo ${e.grupo} · Periodo ${e.periodo}`
+    : `Group ${e.grupo} · Period ${e.periodo}`;
+  const meta = oculto ? location : `${family} · ${state} · ${location}`;
+
+  d.innerHTML = `
+    <span class="mobile-card-symbol">${displaySymbol}</span>
+    <span class="mobile-card-main">
+      <span class="mobile-card-name">${displayName}</span>
+      <span class="mobile-card-meta">${meta}</span>
+    </span>
+    <span class="mobile-card-num">#${e.numero}</span>
+  `;
+
+  d.onclick = () => {
+    AudioSynth.click();
+    mostrar(e);
   };
 
   return d;
@@ -795,13 +841,15 @@ function visible(e) {
 }
 
 function filtrar() {
+  renderMobileList();
+
   if (gameMode) {
     document.querySelectorAll(".elemento").forEach(el => el.classList.remove("atenuado"));
     return;
   }
 
   let n = 0;
-  document.querySelectorAll(".elemento[data-numero]").forEach(el => {
+  document.querySelectorAll(desktopElementSelector).forEach(el => {
     const e = datos.find(x => x.numero === +el.dataset.numero);
     const ok = e && visible(e);
     el.classList.toggle("atenuado", !ok);
@@ -818,6 +866,21 @@ function filtrar() {
 
 function actualizarContador(n) {
   $("contador").textContent = T().contador(n, datos.length || 118);
+  if ($("mobileCounter")) $("mobileCounter").textContent = T().contador(n, datos.length || 118);
+}
+
+function renderMobileList() {
+  const list = $("mobileElementsList");
+  if (!list || !datos.length) return;
+
+  const visibles = gameMode ? datos : datos.filter(visible);
+  list.innerHTML = "";
+  visibles.forEach(e => list.appendChild(mobileCard(e)));
+  if (gameMode) {
+    actualizarContador(acertados.size);
+  } else {
+    actualizarContador(visibles.length);
+  }
 }
 
 function normaliza(s) {
@@ -1089,6 +1152,7 @@ function comprobarIntento() {
     m.textContent = T().correct + (acertados.size === datos.length ? " " + T().win : "");
     m.className = "juego-mensaje ok";
     actualizarScore();
+    renderMobileList();
     elementoActual = null;
     setTimeout(() => {
       if (!elementoActual) $("modal").classList.add("oculto");

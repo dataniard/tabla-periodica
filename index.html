@@ -125,6 +125,17 @@
 
   <!-- Área Principal de la Tabla Periódica -->
   <main class="tabla-main">
+    <section class="mobile-elements" aria-labelledby="mobileElementsTitle">
+      <div class="mobile-elements-head">
+        <div>
+          <h2 id="mobileElementsTitle" data-i18n="mobileListTitle">Exploración móvil</h2>
+          <p data-i18n="mobileListHint">Lista compacta optimizada para tocar, filtrar y abrir fichas rápidamente.</p>
+        </div>
+        <span id="mobileCounter" class="mobile-counter">118</span>
+      </div>
+      <div id="mobileElementsList" class="mobile-elements-list" role="list"></div>
+    </section>
+
     <div class="tabla-scroll-wrap" id="tablaScrollWrap">
       <!-- Grid de la tabla (18 columnas + cabeceras de grupos y periodos) -->
       <div id="tabla" class="tabla" role="grid" aria-label="Tabla periódica de los elementos"></div>
