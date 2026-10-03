@@ -4220,7 +4220,7 @@ function getShells(elem) {
   return shells.length ? shells : [elem.numero];
 }
 
-function renderBohrModel(elem) {
+function renderBohrModel(elem, ocultarSimbolo = false) {
   const container = $("bohrCanvasWrap");
   if (!container) return;
 
@@ -4240,10 +4240,12 @@ function renderBohrModel(elem) {
   const baseR = 24;
   const maxR = 82;
   const stepR = shells.length > 1 ? (maxR - baseR) / (shells.length - 1) : 0;
+  const textoNucleo = ocultarSimbolo ? "?" : elem.simbolo;
+  const ariaLabel = ocultarSimbolo ? "Modelo de Bohr" : `Modelo de Bohr de ${elem.simbolo}`;
 
-  let svgHtml = `<svg viewBox="0 0 ${size} ${size}" class="bohr-svg" aria-label="Modelo de Bohr de ${elem.simbolo}">
+  let svgHtml = `<svg viewBox="0 0 ${size} ${size}" class="bohr-svg" aria-label="${ariaLabel}">
     <circle cx="${center}" cy="${center}" r="12" fill="var(--bohr-nucleus)" class="bohr-nucleus" />
-    <text x="${center}" y="${center + 4}" text-anchor="middle" class="bohr-nucleus-text">${elem.simbolo}</text>`;
+    <text x="${center}" y="${center + 4}" text-anchor="middle" class="bohr-nucleus-text">${textoNucleo}</text>`;
 
   shells.forEach((count, i) => {
     const r = Math.round(shells.length === 1 ? 48 : baseR + i * stepR);
@@ -4864,8 +4866,8 @@ function mostrarPregunta(e) {
   $("dNombre").textContent = T().guessTitle;
   $("dNombreEn").textContent = "···";
 
-  // Modelo de Bohr en la pregunta como pista visual
-  renderBohrModel(e);
+  // Modelo de Bohr en la pregunta como pista visual (sin revelar el símbolo)
+  renderBohrModel(e, true);
 
   $("detalleLista").classList.add("oculto");
   $("juegoZona").classList.remove("oculto");
@@ -4901,6 +4903,11 @@ function comprobarIntento() {
     acertados.add(e.numero);
     rachaJuego++;
     dispararConfeti();
+
+    // Revelar símbolo en el modelo de Bohr y en la cabecera
+    renderBohrModel(e, false);
+    $("dSimbolo").textContent = e.simbolo;
+    $("dNombre").textContent = nombre(e);
 
     if (el) {
       el.classList.remove("juego-oculto");
